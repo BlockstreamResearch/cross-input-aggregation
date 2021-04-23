@@ -1,24 +1,21 @@
-**Signature Half Aggregation in C**
-
+#+TITLE: Signature Half Aggregation in C
 
 * Standard signatures
-  - KeyGen(sk) -> pk
-  - Sign(sk, m) -> sig
-  - Verify(pk, m, sig) -> {true, false}
+- KeyGen(sk) -> pk
+- Sign(sk, m) -> sig
+- Verify(pk, m, sig) -> {true, false}
 
 * Goal
-AggVerify((pk_1, m_1), ..., (pk_n, m_n), sig) -> {true, false}
-
-Trivial solution:
+- AggVerify((pk_1, m_1), ..., (pk_n, m_n), sig) -> {true, false}
+- Trivial solution:
   sig = (sig_1, ..., sig_n)
-
-Goal Nr 2: sig should be short
-
-Note the different messages != multisignatures, MuSig, etc.
+- Goal Nr 2: sig should be short
+- Note the different messages != multisignatures, MuSig, etc.
 
 * Schnorr Signature Half Aggregation
-Aggregate(sig_1, ..., sig_n) -> sig
-AggVerify((pk_1, m_1), ..., (pk_n, m_n), sig) -> {true, false}
+- Aggregate(sig_1, ..., sig_n) -> sig
+- AggVerify((pk_1, m_1), ..., (pk_n, m_n), sig) -> {true, false}
+
 
 1. |sig| ≈ 1/2 (|sig_1| + ... + |sig_n|)
 2. aggregation is non-interactive
@@ -29,13 +26,14 @@ proposed on Bitcoin mailing list ~2017, recent academic paper (Chalkias et al.)
 - block-wide signature aggregation
 - L2 gossip protocols
 
-* aside: Full Aggregation
+* Aside: Full Aggregation
 1. |sig| = |sig_1|
 2. aggregation _is_ interactive
 
 Tx-wide aggregation
 can be combined with half aggregation
 * Schnorr signature verification (BIP 340)
+#+BEGIN_SRC
 Verify(pk, m, sig):
   P = lift_x(int(pk)); fail if that fails
   r = int(sig[0:32]); fail if r ≥ p
@@ -44,12 +42,14 @@ Verify(pk, m, sig):
 
   e = int(hash_{BIP0340/challenge}(bytes(r) || pk || m)) mod n
   Fail if s⋅G ≠ R + e⋅P
+#+END_SRC
 
 * Schnorr Signature Half Aggregation
-"Concatenate the r-parts of the given signatures, and just ~~sum up the s-parts~~
+"Concatenate the r-parts of the given signatures, and just +sum up the s-parts+
  sum up the s-parts after multiplying them with unpredictable values"
 
 - Aggregate((pk_1, m_1, sig_1), ..., (pk_n, m_n, sig_n)):
+  #+BEGIN_SRC
   For i = 1 .. n:
     r_i = sig[0:32]
     s_i = int(sig[32:64])
@@ -57,8 +57,10 @@ Verify(pk, m, sig):
     z_i = int(hash_{HalfAggregation}(r_1 || pk_1 || m_1 || ... || r_n || pk_n || m_n || i)) mod n
   s = z_1⋅s_1 + ... + z_n⋅s_n
   Return sig = (r_1, ..., r_n, s)
+  #+END_SRC
 
 - AggregateVerify((pk_1, m_1), ..., (pk_n, m_n)), sig):
+  #+BEGIN_SRC
   For i = 1 .. n:
     P_i = lift_x(int(pk)); fail if that fails
     r_i = sig[(i-1)⋅32:i⋅32]; fail if r ≥ p
@@ -68,20 +70,21 @@ Verify(pk, m, sig):
     z_i = int(hash_{HalfAggregation}(r_1 || pk_1 || m_1 || ... || r_n || pk_n || m_n || i)) mod n
   s = int(sig[n⋅32:(n+1)⋅32])
   Fail if s⋅G ≠ z_1⋅(R_1 - e_1⋅P_1) + ... + z_n⋅(R_n - e_n⋅P_n)
+  #+END_SRC
 
 - Correctness?
-  Example: Given two sigs (r_1, s_1), (r_2, s_2)
-    valid Schnorr signature implies s_i⋅G = lift_x(r_i) - e_i⋅P_i
-  Aggregated sig = (z_1⋅s_1 + z_2⋅s_2, r_1, r_2)
-  And it holds that
-    z_1⋅s_1 + z_2⋅s_2 = z_1⋅(lift_x(r_1) - e_1⋅P_1) + z_2⋅(lift_x(R_1) - e_2⋅P_2)
-  Hence, AggregateVerify succeeds
+  - Example: Given two sigs (r_1, s_1), (r_2, s_2)
+    - valid Schnorr signature implies s_i⋅G = lift_x(r_i) - e_i⋅P_i
+  - Aggregated sig = (z_1⋅s_1 + z_2⋅s_2, r_1, r_2)
+  - And it holds that
+    - z_1⋅s_1 + z_2⋅s_2 = z_1⋅(lift_x(r_1) - e_1⋅P_1) + z_2⋅(lift_x(R_1) - e_2⋅P_2)
+  - Hence, AggregateVerify succeeds
 
 * Let's go!
 1. Implement Aggregate and AggregateVerify interface
 2. Write tests
-   1. Correctness: Create Schnorr signatures, Aggregate them, AggregateVerify should always succeed
-   2. "Soundness": Create Schnorr signatures, Aggregate them,
-                   any random bit flipped in the input of AggregateVerify will make it fail
+   - Correctness: Create Schnorr signatures, Aggregate them, AggregateVerify should always succeed
+   - "Soundness": Create Schnorr signatures, Aggregate them,
+                  any random bit flipped in the input of AggregateVerify will make it fail
 3. Implement Aggregate and AggregateVerify
-4. Bonus: separate module? API tests? multiexp?
+4. Bonus: separate module? API tests? multiexp? z_1 = 1 optimization?
