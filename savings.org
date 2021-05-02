@@ -37,7 +37,7 @@ both_agged = map(lambda s: s - (n_inputs-1)*64 - 32, size)
 max_agged = map(lambda s: s - n_inputs*64, size)
 
 def savings(name, agged_sizes):
-    return [name] + ["%.2f%%" % (1 - a/b) for (a,b) in zip(agged_sizes, size)]
+    return [name] + ["%.1f%%" % ((1 - a/b)*100) for (a,b) in zip(agged_sizes, size)]
 
 [
     [ "", "bytes", "weight units" ],
@@ -52,9 +52,9 @@ def savings(name, agged_sizes):
 #+RESULTS:
 |                                               | bytes | weight units |
 |-----------------------------------------------+-------+--------------|
-| half aggregation                              | 0.21% |        0.08% |
-| full aggregation                              | 0.26% |        0.10% |
-| both                                          | 0.34% |        0.13% |
-| max (like infinite large full agged coinjoin) | 0.42% |        0.15% |
+| half aggregation                              | 20.8% |         7.7% |
+| full aggregation                              | 26.4% |         9.7% |
+| both                                          | 34.0% |        12.5% |
+| max (like infinite large full agged coinjoin) | 41.6% |        15.3% |
 
 
