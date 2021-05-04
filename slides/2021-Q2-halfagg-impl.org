@@ -1,11 +1,14 @@
 #+TITLE: Signature Half Aggregation in C
 
+Goal: implement half aggregation in libsecp256k1-zkp
+      ([[https://github.com/ElementsProject/secp256k1-zkp]])
+
 * Standard signatures
 - KeyGen(sk) -> pk
 - Sign(sk, m) -> sig
 - Verify(pk, m, sig) -> {true, false}
 
-* Goal
+* Aggregate signatures
 - AggVerify((pk_1, m_1), ..., (pk_n, m_n), sig) -> {true, false}
 - Trivial solution:
   sig = (sig_1, ..., sig_n)
@@ -26,7 +29,7 @@ proposed on Bitcoin mailing list ~2017, recent academic paper (Chalkias et al.)
 - block-wide signature aggregation
 - L2 gossip protocols
 
-* Aside: Full Aggregation
+* Aside: "Full" Aggregation
 1. |sig| = |sig_1|
 2. aggregation _is_ interactive
 
@@ -56,35 +59,36 @@ Verify(pk, m, sig):
   For i = 1 .. n:
     z_i = int(hash_{HalfAggregation}(r_1 || pk_1 || m_1 || ... || r_n || pk_n || m_n || i)) mod n
   s = z_1⋅s_1 + ... + z_n⋅s_n
-  Return sig = (r_1, ..., r_n, s)
+  Return sig = r_1 || ... || r_n || bytes(s)
   #+END_SRC
 
 - AggregateVerify((pk_1, m_1), ..., (pk_n, m_n)), sig):
   #+BEGIN_SRC
   For i = 1 .. n:
     P_i = lift_x(int(pk)); fail if that fails
-    r_i = sig[(i-1)⋅32:i⋅32]; fail if r ≥ p
+    r_i = sig[i⋅32:(i+1)⋅32]; fail if r ≥ p
     R_i = lift_x(int(r_i)); fail if that fails
     e_i = int(hash_{BIP0340/challenge}(bytes(r_i) || pk_i || m_i)) mod n
   For i = 1 .. n:
     z_i = int(hash_{HalfAggregation}(r_1 || pk_1 || m_1 || ... || r_n || pk_n || m_n || i)) mod n
   s = int(sig[n⋅32:(n+1)⋅32])
-  Fail if s⋅G ≠ z_1⋅(R_1 - e_1⋅P_1) + ... + z_n⋅(R_n - e_n⋅P_n)
+  Fail if s⋅G ≠ z_1⋅(R_1 + e_1⋅P_1) + ... + z_n⋅(R_n + e_n⋅P_n)
   #+END_SRC
 
 - Correctness?
   - Example: Given two sigs (r_1, s_1), (r_2, s_2)
-    - valid Schnorr signature implies s_i⋅G = lift_x(r_i) - e_i⋅P_i
-  - Aggregated sig = (z_1⋅s_1 + z_2⋅s_2, r_1, r_2)
+    - valid Schnorr signature implies s_i⋅G = lift_x(r_i) + e_i⋅P_i
+  - Aggregated sig = (r_1, r_2, z_1⋅s_1 + z_2⋅s_2)
   - And it holds that
-    - z_1⋅s_1 + z_2⋅s_2 = z_1⋅(lift_x(r_1) - e_1⋅P_1) + z_2⋅(lift_x(R_1) - e_2⋅P_2)
+    - z_1⋅s_1 + z_2⋅s_2 = z_1⋅(lift_x(r_1) + e_1⋅P_1) + z_2⋅(lift_x(R_1) + e_2⋅P_2)
   - Hence, AggregateVerify succeeds
 
 * Let's go!
 1. Implement Aggregate and AggregateVerify interface
-2. Write tests
+2. Write Test
    - Correctness: Create Schnorr signatures, Aggregate them, AggregateVerify should always succeed
-   - "Soundness": Create Schnorr signatures, Aggregate them,
-                  any random bit flipped in the input of AggregateVerify will make it fail
 3. Implement Aggregate and AggregateVerify
-4. Bonus: separate module? API tests? multiexp? z_1 = 1 optimization?
+4. Write Test
+   - "Unforgeability": Create Schnorr signatures, Aggregate them,
+                       any random bit flipped in the input of AggregateVerify will make it fail
+5. Bonus: separate module? API tests? multiexp? z_1 = 1 optimization?
