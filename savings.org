@@ -1,4 +1,6 @@
-#+TITLE: Cross-input-aggregation savings per tx
+#+TITLE: Cross-input-aggregation savings
+
+*  Savings in an average taproot transaction
 
 #+BEGIN_SRC python :session :results value :exports both
 # Transaction with segwit v1 spends and outputs.
@@ -58,3 +60,8 @@ def savings(name, agged_sizes):
 | max (like infinite large full agged coinjoin) | 41.6% |        15.3% |
 
 
+* Graftroot
+Spending a taproot-like output via graftroot requires a 64-byte signature of the script that the signers delegate control to.
+In comparison, opening a taproot commitment only requires revealing the 32-byte "internal" pubkey (if the committed script is at depth zero).
+With half- or full-aggregation of signatures outside script, the graftroot signature can be aggregated just like key-spend signatures.
+As a result, graftroot spends would be equal to or more efficient that taproot script spends.
