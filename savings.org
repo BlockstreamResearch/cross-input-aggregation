@@ -19,8 +19,9 @@ def tx_size(n_inputs, n_outputs):
             + n_outputs * (
                 8       # amount
                 + 1     # script len
-                + 33)   # script
+                + 34)   # script
              + 4)  # locktime
+         + 2 # witness flag & marker
          + n_inputs * (
              1       # witness stack items
              + 1     # witness item len
@@ -54,10 +55,10 @@ def savings(name, agged_sizes):
 #+RESULTS:
 |                                               | bytes | weight units |
 |-----------------------------------------------+-------+--------------|
-| half aggregation                              | 20.8% |         7.7% |
-| full aggregation                              | 26.4% |         9.7% |
-| both                                          | 34.0% |        12.5% |
-| max (like infinite large full agged coinjoin) | 41.6% |        15.3% |
+| half aggregation                              | 20.6% |         7.6% |
+| full aggregation                              | 26.1% |         9.6% |
+| both                                          | 33.6% |        12.4% |
+| max (like infinite large full agged coinjoin) | 41.2% |        15.2% |
 
 
 * Graftroot
