@@ -26,10 +26,10 @@ Goal: implement half aggregation in libsecp256k1-zkp
 proposed on Bitcoin mailing list ~2017, recent academic paper (Chalkias et al.)
 
 * Applications
-- block-wide signature aggregation
+- block-wide signature aggregation (but it has downsides related to adaptor sigs)
 - L2 gossip protocols
 
-* Aside: "Full" Aggregation
+* Aside: "Full" Schnorr Sig Aggregation
 1. |sig| = |sig_1|
 2. aggregation _is_ interactive
 
@@ -40,24 +40,24 @@ can be combined with half aggregation
 Verify(pk, m, sig):
   P = lift_x(int(pk)); fail if that fails
   r = int(sig[0:32]); fail if r ≥ p
-  s = int(sig[32:64]); fail if s ≥ n
+  s = int(sig[32:64]); fail if s ≥ N
   R = lift_x(int(r)); fail if that fails
 
-  e = int(hash_{BIP0340/challenge}(bytes(r) || pk || m)) mod n
+  e = int(hash_{BIP0340/challenge}(bytes(r) || pk || m)) mod N
   Fail if s⋅G ≠ R + e⋅P
 #+END_SRC
 
 * Schnorr Signature Half Aggregation
-"Concatenate the r-parts of the given signatures, and just +sum up the s-parts+
- sum up the s-parts after multiplying them with unpredictable values"
+"Concatenate the r-values of the given signatures, and just +sum up the s-values+
+ sum up the s-values after multiplying them with unpredictable values"
 
 - Aggregate((pk_1, m_1, sig_1), ..., (pk_n, m_n, sig_n)):
   #+BEGIN_SRC
   For i = 1 .. n:
-    r_i = sig[0:32]
-    s_i = int(sig[32:64])
+    r_i = sig_i[0:32]
+    s_i = int(sig_i[32:64])
   For i = 1 .. n:
-    z_i = int(hash_{HalfAggregation}(r_1 || pk_1 || m_1 || ... || r_n || pk_n || m_n || i)) mod n
+    z_i = int(hash_{HalfAggregation}(r_1 || pk_1 || m_1 || ... || r_n || pk_n || m_n || i)) mod N
   s = z_1⋅s_1 + ... + z_n⋅s_n
   Return sig = r_1 || ... || r_n || bytes(s)
   #+END_SRC
@@ -65,22 +65,22 @@ Verify(pk, m, sig):
 - AggregateVerify((pk_1, m_1), ..., (pk_n, m_n)), sig):
   #+BEGIN_SRC
   For i = 1 .. n:
-    P_i = lift_x(int(pk)); fail if that fails
+    P_i = lift_x(int(pk_i)); fail if that fails
     r_i = sig[i⋅32:(i+1)⋅32]; fail if r ≥ p
     R_i = lift_x(int(r_i)); fail if that fails
-    e_i = int(hash_{BIP0340/challenge}(bytes(r_i) || pk_i || m_i)) mod n
+    e_i = int(hash_{BIP0340/challenge}(bytes(r_i) || pk_i || m_i)) mod N
   For i = 1 .. n:
-    z_i = int(hash_{HalfAggregation}(r_1 || pk_1 || m_1 || ... || r_n || pk_n || m_n || i)) mod n
-  s = int(sig[n⋅32:(n+1)⋅32])
+    z_i = int(hash_{HalfAggregation}(r_1 || pk_1 || m_1 || ... || r_n || pk_n || m_n || i)) mod N
+  s = int(sig[n⋅32:(n+1)⋅32]) mod N
   Fail if s⋅G ≠ z_1⋅(R_1 + e_1⋅P_1) + ... + z_n⋅(R_n + e_n⋅P_n)
   #+END_SRC
 
 - Correctness?
   - Example: Given two sigs (r_1, s_1), (r_2, s_2)
     - valid Schnorr signature implies s_i⋅G = lift_x(r_i) + e_i⋅P_i
-  - Aggregated sig = (r_1, r_2, z_1⋅s_1 + z_2⋅s_2)
+  - Aggregate sig = (r_1, r_2, z_1⋅s_1 + z_2⋅s_2)
   - And it holds that
-    - z_1⋅s_1 + z_2⋅s_2 = z_1⋅(lift_x(r_1) + e_1⋅P_1) + z_2⋅(lift_x(R_1) + e_2⋅P_2)
+    - (z_1⋅s_1 + z_2⋅s_2)⋅G = z_1⋅(lift_x(r_1) + e_1⋅P_1) + z_2⋅(lift_x(r_1) + e_2⋅P_2)
   - Hence, AggregateVerify succeeds
 
 * Let's go!
@@ -88,7 +88,7 @@ Verify(pk, m, sig):
 2. Write Test
    - Correctness: Create Schnorr signatures, Aggregate them, AggregateVerify should always succeed
 3. Implement Aggregate and AggregateVerify
-4. Write Test
+4. Bonus: Write Test
    - "Unforgeability": Create Schnorr signatures, Aggregate them,
                        any random bit flipped in the input of AggregateVerify will make it fail
-5. Bonus: separate module? API tests? multiexp? z_1 = 1 optimization?
+5. Bonus: separate module? API tests? multiexp? z_1 = 1 optimization? streaming api?
