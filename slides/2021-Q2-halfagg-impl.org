@@ -66,7 +66,7 @@ Verify(pk, m, sig):
   #+BEGIN_SRC
   For i = 1 .. n:
     P_i = lift_x(int(pk_i)); fail if that fails
-    r_i = sig[i⋅32:(i+1)⋅32]; fail if r ≥ p
+    r_i = sig[(i-1)⋅32:i⋅32]; fail if r ≥ p
     R_i = lift_x(int(r_i)); fail if that fails
     e_i = int(hash_{BIP0340/challenge}(bytes(r_i) || pk_i || m_i)) mod N
   For i = 1 .. n:
