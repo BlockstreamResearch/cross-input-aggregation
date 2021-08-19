@@ -58,6 +58,6 @@ In other words, can such protocols can be instantiated with a Tapscript spending
 
 # Half Aggregation And Mempool Caching
 
-Nodes accepting a transaction with a half aggregate signature `(s, R_1, ..., R_n)` to their mempool would not throw it away or aggregate it with other signatures.
+As mentioned [on bitcoin-dev](https://lists.linuxfoundation.org/pipermail/bitcoin-dev/2017-May/014308.html) nodes accepting a transaction with a half aggregate signature `(s, R_1, ..., R_n)` to their mempool would not throw it away or aggregate it with other signatures.
 Instead, they keep the signature and when a block with block-wide aggregate signature `(s', R'_1, ..., R'_n')` arrives they can subtract `s` from `s'` and remove `R_1, ..., R_n`, from the block-wide aggregate signature before verifying it.
 As a result, the nodes skip what they have already verified.
