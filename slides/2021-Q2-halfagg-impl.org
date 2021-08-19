@@ -1,4 +1,4 @@
-#+TITLE: Signature Half Aggregation in C
+#+TITLE: Intro to Signature Half Aggregation
 
 Goal: implement half aggregation in libsecp256k1-zkp
       ([[https://github.com/ElementsProject/secp256k1-zkp]])

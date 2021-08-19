@@ -4,9 +4,12 @@ CISA is a potential Bitcoin softfork that reduces transaction weight. The purpos
 
 ## Contents
 
+- [Intro to Signature Half Aggregation](slides/2021-Q2-halfagg-impl.org)
+- [Recording of Implementing Half Aggregation in libsecp256k1-zkp](https://www.youtube.com/watch?v=Dns_9jaNPNk)
 - [Cross-input-aggregation savings](savings.org)
-- Recording: Signature Half Aggregation in C [[slides](slides/2021-Q2-halfagg-impl.org), [youtube](https://www.youtube.com/watch?v=Dns_9jaNPNk)]
 - [Integration Into The Bitcoin Protocol](#integration-into-the-bitcoin-protocol)
+- [Half Aggregation And Adaptor Signatures](#half-aggregation-and-adaptor-signatures)
+- [Half Aggregation And Mempool Caching](#half-aggregation-and-mempool-caching)
 
 ## Integration Into The Bitcoin Protocol
 
@@ -41,3 +44,20 @@ Consider the example policy `(pk(A) and pk(B)) or (pk(A) and older(N))` from abo
 In g'root the root key `keyagg((pk(A), pk(B)))` commits via taproot tweaking to a spending condition consisting of public key `pk(A)` and script `older(N)`.
 In order to spend with the latter path, the script must be satisfied and an _aggregated_ signature for `pk(A)` must exist.
 
+
+## Half Aggregation And Adaptor Signatures
+
+Half aggregation prevents using adaptor signatures ([stackexchange](https://bitcoin.stackexchange.com/questions/107196/why-does-blockwide-signature-aggregation-prevent-adaptor-signatures)).
+However, a new SegWit version as outlined in section [Integration Into The Bitcoin Protocol](#integration-into-the-bitcoin-protocol) would keep signatures inside Tapscript unaggregatable.
+Hence, protocols using adaptor signatures can be instantiated by having adaptor signatures only appear inside Tapscript.
+
+This should not be any less efficient in g'root if the output can be spend directly with a script, i.e., without showing a merkle proof.
+However, since this is not a normal keypath spend and explicitly unaggregatable, such a spend will stick out from other transactions.
+It is an open question if this actually affects protocols built on adaptor signatures.
+In other words, can such protocols can be instantiated with a Tapscript spending path for the adaptor signature but without having to use actually use that path - at least in the cooperative case?
+
+# Half Aggregation And Mempool Caching
+
+Nodes accepting a transaction with a half aggregate signature `(s, R_1, ..., R_n)` to their mempool would not throw it away or aggregate it with other signatures.
+Instead, they keep the signature and when a block with block-wide aggregate signature `(s', R'_1, ..., R'_n')` arrives they can subtract `s` from `s'` and remove `R_1, ..., R_n`, from the block-wide aggregate signature before verifying it.
+As a result, the nodes skip what they have already verified.
