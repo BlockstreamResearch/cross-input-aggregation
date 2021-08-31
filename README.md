@@ -10,6 +10,7 @@ CISA is a potential Bitcoin softfork that reduces transaction weight. The purpos
 - [Integration Into The Bitcoin Protocol](#integration-into-the-bitcoin-protocol)
 - [Half Aggregation And Adaptor Signatures](#half-aggregation-and-adaptor-signatures)
 - [Half Aggregation And Mempool Caching](#half-aggregation-and-mempool-caching)
+- [Repeated Half Aggregation](#repeated-half-aggregation)
 
 ## Integration Into The Bitcoin Protocol
 
@@ -56,8 +57,20 @@ However, since this is not a normal keypath spend and explicitly unaggregatable,
 It is an open question if this actually affects protocols built on adaptor signatures.
 In other words, can such protocols can be instantiated with a Tapscript spending path for the adaptor signature but without having to use actually use that path - at least in the cooperative case?
 
-# Half Aggregation And Mempool Caching
+## Half Aggregation And Mempool Caching
 
 As mentioned [on bitcoin-dev](https://lists.linuxfoundation.org/pipermail/bitcoin-dev/2017-May/014308.html) nodes accepting a transaction with a half aggregate signature `(s, R_1, ..., R_n)` to their mempool would not throw it away or aggregate it with other signatures.
 Instead, they keep the signature and when a block with block-wide aggregate signature `(s', R'_1, ..., R'_n')` arrives they can subtract `s` from `s'` and remove `R_1, ..., R_n`, from the block-wide aggregate signature before verifying it.
 As a result, the nodes skip what they have already verified.
+
+## Repeated Half Aggregation
+
+Regular half aggregation allows non-interactively aggregating a set of signatures into a single, half-aggregate, signature.
+We also want to be able to half aggregate a set of already half-aggregated signatures.
+This should be relatively straightforward to do.
+One thing to keep in mind is that a signature that was half aggregated in such a way needs to store _how_ it was aggregated.
+This is because the aggregation of s-values can not be reversed.
+Hence, the verification algorithm needs to recompute the randomizers that were used in each internal half aggregation by hashing the same set of nonce, public key and message tuples.
+
+
+
