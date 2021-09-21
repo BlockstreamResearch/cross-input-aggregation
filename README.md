@@ -7,7 +7,7 @@ CISA is a potential Bitcoin softfork that reduces transaction weight. The purpos
 - [Intro to Signature Half Aggregation](slides/2021-Q2-halfagg-impl.org)
 - [Recording of Implementing Half Aggregation in libsecp256k1-zkp](https://www.youtube.com/watch?v=Dns_9jaNPNk)
 - [Cross-input-aggregation savings](savings.org)
-- [Sigagg Case Study: LN Channel Announcements](#sigagg-case-study-in-channel-announcements)
+- [Sigagg Case Study: LN Channel Announcements](#sigagg-case-study-ln-channel-announcements)
 - [Integration Into The Bitcoin Protocol](#integration-into-the-bitcoin-protocol)
 - [Half Aggregation And Adaptor Signatures](#half-aggregation-and-adaptor-signatures)
 - [Half Aggregation And Mempool Caching](#half-aggregation-and-mempool-caching)
