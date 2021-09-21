@@ -7,10 +7,34 @@ CISA is a potential Bitcoin softfork that reduces transaction weight. The purpos
 - [Intro to Signature Half Aggregation](slides/2021-Q2-halfagg-impl.org)
 - [Recording of Implementing Half Aggregation in libsecp256k1-zkp](https://www.youtube.com/watch?v=Dns_9jaNPNk)
 - [Cross-input-aggregation savings](savings.org)
+- [Sigagg Case Study: LN Channel Announcements](#sigagg-case-study-in-channel-announcements)
 - [Integration Into The Bitcoin Protocol](#integration-into-the-bitcoin-protocol)
 - [Half Aggregation And Adaptor Signatures](#half-aggregation-and-adaptor-signatures)
 - [Half Aggregation And Mempool Caching](#half-aggregation-and-mempool-caching)
 - [Repeated Half Aggregation](#repeated-half-aggregation)
+
+
+## Sigagg Case Study: LN Channel Announcements
+
+[Channel announcements messages](https://github.com/lightningnetwork/lightning-rfc/blob/master/07-routing-gossip.md#the-channel_announcement-message) are gossiped in the Lightning Network to allow nodes to discover routes for payments.
+
+To prove that a channel between a node with public key `node_1` and a node with public key `node_2` does exist, the announcement contains four signatures.
+First, the announcement contains `node_signature_1` and `node_signature_2` which are are signatures over the channel announcement message by `node_1` and `node_2` respectively.
+
+The channel announcement also proves that the two keys `bitcoin_key_1` and `bitcoin_key_2` contained in the funding output of the funding transaction are owned by `node_1` and `node_2` respectively.
+Therefore, it contains signature `bitcoin_signature_1` by `bitcoin_key_1` over `node_1` and `bitcoin_signature_2` by `bitcoin_key_2` over `node_2`.
+
+1. Since `node_signature_1` and `node_signature_2` are signatures over the same message, one can use a scheme like [MuSig2](https://eprint.iacr.org/2020/1261.pdf) to replace both signatures with a single multisignature `node_signature` that has the same size as an individual signature.
+2. In order to create a channel announcement message, both nodes need to cooperate.
+   Therefore, they can interactively fully aggregate the three signatures into a single aggregate signature.
+3. Channel announcements are often sent in batches.
+   Within a batch, the signatures of all channel announcements can be non-interactively half aggregated since this does not require the communication with the nodes.
+   Each channel announcement signature is thus reduced to a half-aggregated signature which is half the size of the original signature.
+
+As a result, starting from four signatures (256 bytes) which make up about 60% of a channel announcement today are aggregated into one half signature (32 bytes for a large batch).
+
+Of course, variations of above recipe are possible.
+For example, if one wants to avoid full aggregation for simplicity's sake, the four signatures in an announcement can just be half aggregated to reduce them to the size of 2.5 signatures.
 
 ## Integration Into The Bitcoin Protocol
 
