@@ -69,6 +69,8 @@ Consider the example policy `(pk(A) and pk(B)) or (pk(A) and older(N))` from abo
 In g'root the root key `keyagg((pk(A), pk(B)))` commits via taproot tweaking to a spending condition consisting of public key `pk(A)` and script `older(N)`.
 In order to spend with the latter path, the script must be satisfied and an _aggregated_ signature for `pk(A)` must exist.
 
+The [Entroot](https://gist.github.com/sipa/ca1502f8465d0d5032d9dd2465f32603) proposal is a slightly improved version of g'root that integrates Graftroot.
+One of the main appeals is that Entroot is "remarkably elegant" because the validation rules of Entroot are rather simple for the capabilities it enables.
 
 ## Half Aggregation And Adaptor Signatures
 
