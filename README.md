@@ -9,8 +9,9 @@ CISA is a potential Bitcoin softfork that reduces transaction weight. The purpos
 - [Cross-input-aggregation savings](savings.org)
 - [Sigagg Case Study: LN Channel Announcements](#sigagg-case-study-ln-channel-announcements)
 - [Integration Into The Bitcoin Protocol](#integration-into-the-bitcoin-protocol)
-- [Half Aggregation And Adaptor Signatures](#half-aggregation-and-adaptor-signatures)
 - [Half Aggregation And Mempool Caching](#half-aggregation-and-mempool-caching)
+- [Half Aggregation And Reorgs](#half-aggregation-and-reorgs)
+- [Half Aggregation And Adaptor Signatures](#half-aggregation-and-adaptor-signatures)
 - [Repeated Half Aggregation](#repeated-half-aggregation)
 
 
@@ -72,6 +73,37 @@ In order to spend with the latter path, the script must be satisfied and an _agg
 The [Entroot](https://gist.github.com/sipa/ca1502f8465d0d5032d9dd2465f32603) proposal is a slightly improved version of g'root that integrates Graftroot.
 One of the main appeals is that Entroot is "remarkably elegant" because the validation rules of Entroot are rather simple for the capabilities it enables.
 
+## Half Aggregation And Mempool Caching
+
+As mentioned [on bitcoin-dev](https://lists.linuxfoundation.org/pipermail/bitcoin-dev/2017-May/014308.html) nodes accepting a transaction with a half aggregate signature `(s, R_1, ..., R_n)` to their mempool would not throw it away or aggregate it with other signatures.
+Instead, they keep the signature and when a block with block-wide aggregate signature `(s', R'_1, ..., R'_n')` arrives they can subtract `s` from `s'` and remove `R_1, ..., R_n`, from the block-wide aggregate signature before verifying it.
+As a result, the nodes skip what they have already verified.
+
+## Half Aggregation And Reorgs
+
+Assume there is a transaction `X` with half aggregate signature `S0 = (s0, R_1, ..., R_n)`.
+The transaction is contained in chain `C1` and therefore there exists a block with a signature `S1` that half aggregates all signatures in the block.
+Since `s0` is aggregated into `S1`, it is not retrievable from the block.
+
+Now there happens to be a reorganization from chain `C1` to chain `C2`.
+There are the following two cases where half aggregation affects the reorganization.
+
+1. Transaction `X` is contained in both chain `C1` and `C2`.
+   Let `S2` be the block-wide half aggregate signature of the block in `C2` that conatains `X`.
+   In general `S1 != S2`, so the whole half-aggregate signature `S2` must be verified, including the contribution of `X` despite having it verified already.
+   If `s0` was kept, it could be subtracted from `S2`.
+   This is in contrast to ordinary signatures, which do not have to be re-verified in a reorg.
+2. Transaction `X` is contained in `C1` but not in `C2`.
+   Because we can't recover `s0`, we can't broadcast transaction `X`, nor can we build a block that includes it.
+   Hence, we can't meaningfully put `X` back into the mempool.
+
+Both cases would indicate that it is beneficial to keep `s0` even though the transaction is included in the best chain.
+Only when the transaction is buried so deep that reorgs can be ruled out, the value `s0` can be discarded.
+This approach is certainly not fully satisfying.
+
+Another solution for case 2. is to have the participants of the transaction (such as sender and receiver) rebroadcast the transaction.
+But this may have privacy issues.
+
 ## Half Aggregation And Adaptor Signatures
 
 Half aggregation prevents using adaptor signatures ([stackexchange](https://bitcoin.stackexchange.com/questions/107196/why-does-blockwide-signature-aggregation-prevent-adaptor-signatures)).
@@ -82,12 +114,6 @@ This should not be any less efficient in g'root if the output can be spend direc
 However, since this is not a normal keypath spend and explicitly unaggregatable, such a spend will stick out from other transactions.
 It is an open question if this actually affects protocols built on adaptor signatures.
 In other words, can such protocols can be instantiated with a Tapscript spending path for the adaptor signature but without having to use actually use that path - at least in the cooperative case?
-
-## Half Aggregation And Mempool Caching
-
-As mentioned [on bitcoin-dev](https://lists.linuxfoundation.org/pipermail/bitcoin-dev/2017-May/014308.html) nodes accepting a transaction with a half aggregate signature `(s, R_1, ..., R_n)` to their mempool would not throw it away or aggregate it with other signatures.
-Instead, they keep the signature and when a block with block-wide aggregate signature `(s', R'_1, ..., R'_n')` arrives they can subtract `s` from `s'` and remove `R_1, ..., R_n`, from the block-wide aggregate signature before verifying it.
-As a result, the nodes skip what they have already verified.
 
 ## Repeated Half Aggregation
 
