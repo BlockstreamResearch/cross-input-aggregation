@@ -23,7 +23,7 @@ Goal: implement half aggregation in libsecp256k1-zkp
 1. |sig| ≈ 1/2 (|sig_1| + ... + |sig_n|)
 2. aggregation is non-interactive
 
-proposed on Bitcoin mailing list ~2017, recent academic paper (Chalkias et al.)
+[[https://lists.linuxfoundation.org/pipermail/bitcoin-dev/2017-May/014272.html][proposed on Bitcoin mailing list ~2017]], recent academic paper ([[https://eprint.iacr.org/2021/350][Chalkias et al.]])
 
 * Applications
 - block-wide signature aggregation (but it has downsides related to adaptor sigs)
