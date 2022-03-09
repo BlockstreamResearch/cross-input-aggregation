@@ -4,16 +4,20 @@ CISA is a potential Bitcoin softfork that reduces transaction weight. The purpos
 
 ## Contents
 
-- [Intro to Signature Half Aggregation](slides/2021-Q2-halfagg-impl.org)
-- [Recording of Implementing Half Aggregation in libsecp256k1-zkp](https://www.youtube.com/watch?v=Dns_9jaNPNk)
-- [Cross-input-aggregation savings](savings.org)
+- [Half Aggregation](#half-aggregation)
 - [Sigagg Case Study: LN Channel Announcements](#sigagg-case-study-ln-channel-announcements)
 - [Integration Into The Bitcoin Protocol](#integration-into-the-bitcoin-protocol)
-- [Half Aggregation And Mempool Caching](#half-aggregation-and-mempool-caching)
-- [Half Aggregation And Reorgs](#half-aggregation-and-reorgs)
-- [Half Aggregation And Adaptor Signatures](#half-aggregation-and-adaptor-signatures)
-- [Repeated Half Aggregation](#repeated-half-aggregation)
+  - [Cross-input-aggregation savings](#cross-input-aggregation-savings)
+  - [Half Aggregation And Mempool Caching](#half-aggregation-and-mempool-caching)
+  - [Half Aggregation And Reorgs](#half-aggregation-and-reorgs)
+  - [Half Aggregation And Adaptor Signatures](#half-aggregation-and-adaptor-signatures)
 
+## Half Aggregation
+
+Half aggregation allows non-interactively aggregating a set of signatures into a single aggregate signature whose size is half of the size of the original signatures.
+
+See [half-aggregation.mediawiki](half-aggregation.mediawiki) for a detailed description.
+There is also a [recording of Implementing Half Aggregation in libsecp256k1-zkp](https://www.youtube.com/watch?v=Dns_9jaNPNk) with accompanying ["slides"](slides/2021-Q2-halfagg-impl.org).
 
 ## Sigagg Case Study: LN Channel Announcements
 
@@ -73,13 +77,18 @@ In order to spend with the latter path, the script must be satisfied and an _agg
 The [Entroot](https://gist.github.com/sipa/ca1502f8465d0d5032d9dd2465f32603) proposal is a slightly improved version of g'root that integrates Graftroot.
 One of the main appeals is that Entroot is "remarkably elegant" because the validation rules of Entroot are rather simple for the capabilities it enables.
 
-## Half Aggregation And Mempool Caching
+
+### Cross-input Aggregation Savings
+
+See [savings.org](savings.org).
+
+### Half Aggregation And Mempool Caching
 
 As mentioned [on bitcoin-dev](https://lists.linuxfoundation.org/pipermail/bitcoin-dev/2017-May/014308.html) nodes accepting a transaction with a half aggregate signature `(s, R_1, ..., R_n)` to their mempool would not throw it away or aggregate it with other signatures.
 Instead, they keep the signature and when a block with block-wide aggregate signature `(s', R'_1, ..., R'_n')` arrives they can subtract `s` from `s'` and remove `R_1, ..., R_n`, from the block-wide aggregate signature before verifying it.
 As a result, the nodes skip what they have already verified.
 
-## Half Aggregation And Reorgs
+### Half Aggregation And Reorgs
 
 Assume there is a transaction `X` with half aggregate signature `S0 = (s0, R_1, ..., R_n)`.
 The transaction is contained in chain `C1` and therefore there exists a block with a signature `S1` that half aggregates all signatures in the block.
@@ -104,7 +113,7 @@ This approach is certainly not fully satisfying.
 Another solution for case 2. is to have the participants of the transaction (such as sender and receiver) rebroadcast the transaction.
 But this may have privacy issues.
 
-## Half Aggregation And Adaptor Signatures
+### Half Aggregation And Adaptor Signatures
 
 Half aggregation prevents using adaptor signatures ([stackexchange](https://bitcoin.stackexchange.com/questions/107196/why-does-blockwide-signature-aggregation-prevent-adaptor-signatures)).
 However, a new SegWit version as outlined in section [Integration Into The Bitcoin Protocol](#integration-into-the-bitcoin-protocol) would keep signatures inside Tapscript unaggregatable.
@@ -114,15 +123,3 @@ This should not be any less efficient in g'root if the output can be spend direc
 However, since this is not a normal keypath spend and explicitly unaggregatable, such a spend will stick out from other transactions.
 It is an open question if this actually affects protocols built on adaptor signatures.
 In other words, can such protocols can be instantiated with a Tapscript spending path for the adaptor signature but without having to use actually use that path - at least in the cooperative case?
-
-## Repeated Half Aggregation
-
-Regular half aggregation allows non-interactively aggregating a set of signatures into a single, half-aggregate, signature.
-We also want to be able to half aggregate a set of already half-aggregated signatures.
-This should be relatively straightforward to do.
-One thing to keep in mind is that a signature that was half aggregated in such a way needs to store _how_ it was aggregated.
-This is because the aggregation of s-values can not be reversed.
-Hence, the verification algorithm needs to recompute the randomizers that were used in each internal half aggregation by hashing the same set of nonce, public key and message tuples.
-
-
-

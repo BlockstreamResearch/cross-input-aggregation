@@ -1,0 +1,78 @@
+<pre>
+  Title: Half Aggregation of BIP 340 signatures
+</pre>
+
+== Description ==
+
+This document describes ''half aggregation'' of BIP 340 signatures.
+Half aggregation is the process of aggregating a set of signatures into a single aggregate signature.
+The size of the resulting signature is half of the size of the original signatures.
+
+The idea for half aggration of Schnorr signatures [https://lists.linuxfoundation.org/pipermail/bitcoin-dev/2017-May/014272.html appeared on the Bitcoin mailing list] in 2017.
+The scheme had a security flaw that was [https://lists.linuxfoundation.org/pipermail/bitcoin-dev/2017-May/014306.html noticed] and [https://lists.linuxfoundation.org/pipermail/bitcoin-dev/2017-May/014308.html fixed] shortly after.
+In 2021 [https://eprint.iacr.org/2021/350 Chalkias, Garillot, Kondi and Nikolaenko] published a security proof in the random oracle model (ROM) that reduces the security of half aggregation to the security of Schnorr signatures.
+[https://eprint.iacr.org/2022/222.pdf Chen and Zhao] were able to produce a tight proof in the ROM and algebraic group model in the following year.
+Moreover, they came up with an elegant approach to incremental aggregation that is used in this document.
+
+=== Design ===
+
+* Incremental aggregation allows non-interactively aggregating BIP 340 signatures into an existing half aggregate signature.
+* A half aggregate signature of ''u'' BIP 340 input signatures is serialized as the ''(u+1)⋅32''-byte array ''r<sub>1</sub> || ... || r<sub>u</sub> || bytes(s)'' where ''r<sub>i</sub>'' is a 32-byte array from input signature ''i'' and ''s'' is a scalar aggregate (see below for details).
+
+=== Notation ===
+
+See [https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki|BIP340].
+
+=== Aggregate ===
+
+Input:
+* The number ''u'' of signatures to aggregate with ''0 < u < 2^32''
+* The public keys ''pk<sub>1..u</sub>'': ''u'' 32-byte arrays
+* The messages ''m<sub>1..u</sub>'': ''u'' 32-byte arrays
+* The signatures ''sig<sub>1..u</sub>'': ''u'' 32-byte arrays
+
+The algorithm ''Aggregate(pk<sub>1..u</sub>, m<sub>1..u</sub>, sig<sub>1..u</sub>)'' is defined as:
+* Let ''aggsig = bytes(0)''; fail if that fails.
+* Return ''IncAggregate(0, aggsig, u, pk<sub>1..u</sub>, m<sub>1..u</sub>, sig<sub>1..u</sub>)''.
+
+Input:
+* The number ''v'' of aggregated signatures with ''0 &le; v < 2^32''
+* The aggregate signature ''aggsig'' : ''(v+1)⋅32''-byte array
+* The number ''u'' of signatures to add to aggregate with ''0 < u < 2^32''
+* The public keys ''pk<sub>1..v+u</sub>'': ''v+u'' 32-byte arrays
+* The messages ''m<sub>1..v+u</sub>'': ''v+u'' 32-byte arrays
+* The signatures ''sig<sub>v+1..v+u</sub>'': ''u'' 32-byte arrays
+
+The algorithm ''IncAggregate(v, aggsig, u, pk<sub>1..v+u</sub>, m<sub>1..v+u</sub>, sig<sub>v+1..v+u</sub>)'' is defined as:
+* For ''i = 1 .. v'':
+** Let ''r<sub>i</sub> = sig[(i-1)⋅32:i⋅32]''
+* For ''i = v+1 .. v+u'':
+** Let ''r<sub>i</sub> = sig<sub>i</sub>[0:32]''
+** Let ''s<sub>i</sub> = int(sig<sub>i</sub>[32:64])''
+** Let ''z<sub>i</sub> = int(hash<sub>HalfAggregation</sub>(r<sub>1</sub> || pk<sub>1</sub> || m<sub>1</sub> || ... || r<sub>i</sub> || pk<sub>i</sub> || m<sub>i</sub>)) mod n''
+* Let ''s = int(aggsig[v⋅32:(v+1)⋅32]) + z<sub>v+1</sub>⋅s<sub>v+1</sub> + ... + z<sub>v+u</sub>⋅s<sub>v+u</sub> mod n''
+* Return ''r<sub>1</sub> || ... || r<sub>v+u</sub> || bytes(s)''
+
+=== VerifyAggregate ===
+
+Input:
+* The number ''u'' aggregated signatures with ''0 < u < 2^32''
+* The aggregate signature ''aggsig'' : ''(u+1)⋅32''-byte array
+* The public keys ''pk<sub>1..u</sub>'': ''u'' 32-byte arrays
+* The messages ''m<sub>1..u</sub>'': ''u'' 32-byte arrays
+
+The algorithm ''VerifyAggregate(aggsig, pk<sub>1..u</sub>, m<sub>1..u</sub>)'' is defined as:
+* For ''i = 1 .. u'':
+** Let ''P<sub>i</sub> = lift_x(int(pk<sub>i</sub>))''; fail if that fails
+** Let ''r<sub>i</sub> = aggsig[(i-1)⋅32:i⋅32]''; fail if ''r<sub>i</sub> &ge; p''
+** Let ''R<sub>i</sub> = lift_x(int(r<sub>i</sub>))''; fail if that fails
+** Let ''e<sub>i</sub> = int(hash<sub>BIP0340/challenge</sub>(bytes(r<sub>i</sub>) || pk<sub>i</sub> || m<sub>i</sub>)) mod n''
+** Let ''z<sub>i</sub> = int(hash<sub>HalfAggregation</sub>(r<sub>1</sub> || pk<sub>1</sub> || m<sub>1</sub> || ... || r<sub>i</sub> || pk<sub>i</sub> || m<sub>i</sub>)) mod n''
+* Let ''s = int(sig[u⋅32:(u+1)⋅32]); fail if ''s &ge; p''
+* Fail if ''s⋅G &ne; z<sub>1</sub>⋅(R<sub>1</sub> + e<sub>1</sub>⋅P<sub>1</sub>) + ... + z<sub>u</sub>⋅(R<sub>u</sub> + e<sub>u</sub>⋅P<sub>u</sub>)''
+* Return success iff no failure occurred before reaching this point.
+
+== Applications ==
+
+* Block-wide signature aggregation (but it has downsides related to adaptor sigs and block reorgs)
+* Layer 2 gossip protocols
