@@ -18,6 +18,7 @@ Moreover, they came up with an elegant approach to incremental aggregation that 
 
 * Incremental aggregation allows non-interactively aggregating BIP 340 signatures into an existing half aggregate signature.
 * A half aggregate signature of ''u'' BIP 340 input signatures is serialized as the ''(u+1)⋅32''-byte array ''r<sub>1</sub> || ... || r<sub>u</sub> || bytes(s)'' where ''r<sub>i</sub>'' is a 32-byte array from input signature ''i'' and ''s'' is a scalar aggregate (see below for details).
+* This document does _not_ specify the aggregation of multiple aggregate signatures (yet). It is possible, but requires changing the encoding of an aggregate signature. Since it is not possible to undo the aggregation of the s-values, when verifying of such an aggregate signature the randomizers need to be the same as when verifying the individual aggregate signature. Therefore, the aggregate signature needs encode a tree that reveals how the individual signatures were aggregated and how the resulting aggregate signatures were reaggregated.
 
 === Notation ===
 
