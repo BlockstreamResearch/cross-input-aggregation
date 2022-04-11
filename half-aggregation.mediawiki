@@ -6,9 +6,9 @@
 
 This document describes ''half aggregation'' of BIP 340 signatures.
 Half aggregation is the process of aggregating a set of signatures into a single aggregate signature.
-The size of the resulting signature is half of the size of the original signatures.
+The size of the resulting aggregate signature is approximately half of the combined size of the original signatures.
 
-The idea for half aggration of Schnorr signatures [https://lists.linuxfoundation.org/pipermail/bitcoin-dev/2017-May/014272.html was brought up by Tadge Dryja on the Bitcoin mailing list] in 2017.
+The idea for half aggregation of Schnorr signatures [https://lists.linuxfoundation.org/pipermail/bitcoin-dev/2017-May/014272.html was brought up by Tadge Dryja on the Bitcoin mailing list] in 2017.
 The scheme had a security flaw that was [https://lists.linuxfoundation.org/pipermail/bitcoin-dev/2017-May/014306.html noticed] and [https://lists.linuxfoundation.org/pipermail/bitcoin-dev/2017-May/014308.html fixed] shortly after by Russell O'Connor and Andrew Poelstra.
 In 2021 [https://eprint.iacr.org/2021/350 Chalkias, Garillot, Kondi and Nikolaenko] published a security proof in the random oracle model (ROM) that reduces the security of half aggregation to the security of Schnorr signatures.
 [https://eprint.iacr.org/2022/222.pdf Chen and Zhao] were able to produce a tight proof in the ROM and algebraic group model in the following year.
