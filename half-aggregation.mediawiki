@@ -30,11 +30,13 @@ Input:
 * The number ''u'' of signatures to aggregate with ''0 < u < 2^32''
 * The public keys ''pk<sub>1..u</sub>'': ''u'' 32-byte arrays
 * The messages ''m<sub>1..u</sub>'': ''u'' 32-byte arrays
-* The signatures ''sig<sub>1..u</sub>'': ''u'' 32-byte arrays
+* The signatures ''sig<sub>1..u</sub>'': ''u'' 64-byte arrays
 
 The algorithm ''Aggregate(pk<sub>1..u</sub>, m<sub>1..u</sub>, sig<sub>1..u</sub>)'' is defined as:
 * Let ''aggsig = bytes(0)''; fail if that fails.
 * Return ''IncAggregate(0, aggsig, u, pk<sub>1..u</sub>, m<sub>1..u</sub>, sig<sub>1..u</sub>)''.
+
+=== IncAggregate ===
 
 Input:
 * The number ''v'' of aggregated signatures with ''0 &le; v < 2^32''
@@ -42,11 +44,11 @@ Input:
 * The number ''u'' of signatures to add to aggregate with ''0 < u < 2^32''
 * The public keys ''pk<sub>1..v+u</sub>'': ''v+u'' 32-byte arrays
 * The messages ''m<sub>1..v+u</sub>'': ''v+u'' 32-byte arrays
-* The signatures ''sig<sub>v+1..v+u</sub>'': ''u'' 32-byte arrays
+* The signatures ''sig<sub>v+1..v+u</sub>'': ''u'' 64-byte arrays
 
 The algorithm ''IncAggregate(v, aggsig, u, pk<sub>1..v+u</sub>, m<sub>1..v+u</sub>, sig<sub>v+1..v+u</sub>)'' is defined as:
 * For ''i = 1 .. v'':
-** Let ''r<sub>i</sub> = sig[(i-1)⋅32:i⋅32]''
+** Let ''r<sub>i</sub> = aggsig[(i-1)⋅32:i⋅32]''
 * For ''i = v+1 .. v+u'':
 ** Let ''r<sub>i</sub> = sig<sub>i</sub>[0:32]''
 ** Let ''s<sub>i</sub> = int(sig<sub>i</sub>[32:64])''
