@@ -1,30 +1,76 @@
 <pre>
-  Title: Half Aggregation of BIP 340 signatures
+  Title: Half-Aggregation of BIP 340 signatures
 </pre>
 
-== Description ==
+== Introduction ==
 
-This document describes ''half aggregation'' of BIP 340 signatures.
-Half aggregation is the process of aggregating a set of signatures into a single aggregate signature.
+=== Abstract ===
+
+This document describes ''half-aggregation'' of BIP 340 signatures.
+Half-aggregation is the process of aggregating a collection of signatures into a single aggregate signature.
 The size of the resulting aggregate signature is approximately half of the combined size of the original signatures.
 
-The idea for half aggregation of Schnorr signatures [https://lists.linuxfoundation.org/pipermail/bitcoin-dev/2017-May/014272.html was brought up by Tadge Dryja on the Bitcoin mailing list] in 2017.
-The scheme had a security flaw that was [https://lists.linuxfoundation.org/pipermail/bitcoin-dev/2017-May/014306.html noticed] and [https://lists.linuxfoundation.org/pipermail/bitcoin-dev/2017-May/014308.html fixed] shortly after by Russell O'Connor and Andrew Poelstra.
-In 2021 [https://eprint.iacr.org/2021/350 Chalkias, Garillot, Kondi and Nikolaenko] published a security proof in the random oracle model (ROM) that reduces the security of half aggregation to the security of Schnorr signatures.
-[https://eprint.iacr.org/2022/222.pdf Chen and Zhao] were able to produce a tight proof in the ROM and algebraic group model in the following year.
-Moreover, they came up with an elegant approach to incremental aggregation that is used in this document.
+=== Copyright ===
+
+This document is licensed under the 3-clause BSD license.
+
+=== Motivation ===
+
+Half-aggregation is applicable if there is a verifier that needs to verify multiple signatures.
+Instead of sending individual signatures to the verifier, the signatures can be compressed into a single aggregate signature and sent to the verifier.
+If the verifier can successfully verify the aggregate signature, the verifier can be sure that the individual signatures would have passed verification.
+
+The purpose of half-aggregation is to reduce the size of the data that is sent to the verifier.
+While ''n'' BIP 340 signatures are ''64*n'' bytes, a half-aggregate of the same signatures is ''32*n + 32'' bytes.
+The process of half-aggregation is straightforward: it is a pure function of the input signatures, public keys, and messages.
+It is non-interactive and does ''not'' require cooperation from other parties, including signers or verifiers.
+
+There are a variety of scenarios where half-aggregation of BIP-340 signatures is useful.
+To keep this section brief and avoid getting outdated quickly, we focus on listing example applications and defer the detailed discussion of the application-specific trade-offs to other places.
+
+One example is the Lightning Network routing gossip protocol, which [https://github.com/lightning/bolts/blob/2e8f2095a36afb9de38da0f3f0051c7dc16dfc36/07-routing-gossip.md as of this writing] involves messages that contain ECDSA signatures.
+If the signature scheme was changed to BIP 340, half-aggregation could reduce the total amount of gossiped data.
+Instead of sending individual gossip messages, nodes could assemble a batch of messages and half-aggregate the signatures of the individual messages into a single signature for the batch.
+
+Another application of half-aggregation is within the Bitcoin consensus protocol.
+In particular, it has been discussed in the context of the [https://lists.linuxfoundation.org/pipermail/bitcoin-dev/2018-February/015700.html Graftroot proposal].
+Half-aggregation would allow Graftroot spending to be as efficient as best-case Taproot spends by aggregating the signature of the ''surrogate script'' and signatures that satisfy this script.
+Moreover, half-aggregation improves the efficiency of proposed Bitcoin script opcodes that verify multiple signatures, such as [https://lists.linuxfoundation.org/pipermail/bitcoin-dev/2022-February/019926.html OP_EVICT].
+
+Half-aggregation can also be applied to the signatures in the inputs of Bitcoin transactions, a process known as cross-input signature aggregation (CISA).
+This [https://github.com/ElementsProject/cross-input-aggregation/blob/master/savings.org reduces the size of an average transaction] by 20.6% and the weight by 7.6%.
+A known downside of using half aggregation is that some uses of adaptor signature protocols [https://github.com/ElementsProject/cross-input-aggregation#half-aggregation-and-adaptor-signatures may be incompatible].
+Usually, CISA is proposed with interactive ''full'' signature aggregation instead of non-interactive half-aggregation because creating a valid transaction already requires cooperation, and full signature aggregation is more efficient.
+However, the difference in complexity between half-aggregation and full aggregation is so significant that basing a CISA on half-aggregation is a legitimate approach.
+
+The most invasive application to Bitcoin's consensus would be block-wide signature aggregation.
+It refers to a process where block producers aggregate as many transaction signatures as possible.
+In the best case, a full block would only have a single half-aggregate signature.
+While this is attractive from the efficiency perspective, block-wide aggregation requires more research (and, in particular, special attention to handling
+[https://github.com/ElementsProject/cross-input-aggregation#half-aggregation-and-reorgs reorgs]).
+>>>>>>> c7f6c1f (half-aggregation: rearrange and add motivation section)
 
 === Design ===
 
-* Incremental aggregation allows non-interactively aggregating BIP 340 signatures into an existing half aggregate signature.
-* A half aggregate signature of ''u'' BIP 340 input signatures is serialized as the ''(u+1)⋅32''-byte array ''r<sub>1</sub> || ... || r<sub>u</sub> || bytes(s)'' where ''r<sub>i</sub>'' is a 32-byte array from input signature ''i'' and ''s'' is a scalar aggregate (see below for details).
+The idea for half-aggregation of Schnorr signatures was brought up in the context of block-wide signature aggregation [https://lists.linuxfoundation.org/pipermail/bitcoin-dev/2017-May/014272.html by Tadge Dryja on the Bitcoin mailing list] in 2017.
+The scheme had a security flaw that was [https://lists.linuxfoundation.org/pipermail/bitcoin-dev/2017-May/014306.html noticed] and [https://lists.linuxfoundation.org/pipermail/bitcoin-dev/2017-May/014308.html fixed] shortly after by Russell O'Connor and Andrew Poelstra.
+In 2021 [https://eprint.iacr.org/2021/350 Chalkias, Garillot, Kondi and Nikolaenko] published a security proof in the random oracle model (ROM) that reduces the security of half-aggregation to the security of Schnorr signatures.
+[https://eprint.iacr.org/2022/222.pdf Chen and Zhao] were able to produce a tight proof in the ROM and algebraic group model in the following year.
+Moreover, they came up with an elegant approach to incremental aggregation that is used in this document.
+
+* Incremental aggregation allows non-interactively aggregating BIP 340 signatures into an existing half-aggregate signature.
+* A half-aggregate signature of ''u'' BIP 340 input signatures is serialized as the ''(u+1)⋅32''-byte array ''r<sub>1</sub> || ... || r<sub>u</sub> || bytes(s)'' where ''r<sub>i</sub>'' is a 32-byte array from input signature ''i'' and ''s'' is a scalar aggregate (see below for details).
 * This document does _not_ specify the aggregation of multiple aggregate signatures (yet). It is possible, but requires changing the encoding of an aggregate signature. Since it is not possible to undo the aggregation of the s-values, when verifying of such an aggregate signature the randomizers need to be the same as when verifying the individual aggregate signature. Therefore, the aggregate signature needs encode a tree that reveals how the individual signatures were aggregated and how the resulting aggregate signatures were reaggregated.
+
+== Description ==
 
 === Notation ===
 
 See [https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki|BIP340].
 
-=== Aggregate ===
+=== Specification ===
+
+==== Aggregate ====
 
 Input:
 * The number ''u'' of signatures to aggregate with ''0 < u < 2^32''
@@ -56,7 +102,7 @@ The algorithm ''IncAggregate(v, aggsig, u, pk<sub>1..v+u</sub>, m<sub>1..v+u</su
 * Let ''s = int(aggsig[v⋅32:(v+1)⋅32]) + z<sub>v+1</sub>⋅s<sub>v+1</sub> + ... + z<sub>v+u</sub>⋅s<sub>v+u</sub> mod n''
 * Return ''r<sub>1</sub> || ... || r<sub>v+u</sub> || bytes(s)''
 
-=== VerifyAggregate ===
+==== VerifyAggregate ====
 
 Input:
 * The number ''u'' aggregated signatures with ''0 < u < 2^32''
@@ -77,10 +123,4 @@ The algorithm ''VerifyAggregate(aggsig, pk<sub>1..u</sub>, m<sub>1..u</sub>)'' i
 
 The verification algorithm is similar to [https://github.com/bitcoin/bips/blob/master/bip-0340.mediawiki#batch-verification BIP340 Batch Verification]. As in BIP340, using an [https://bitcoin.stackexchange.com/a/80702/109853 efficient algorithm for computing the sum of multiple EC multiplications] can significantly speed up verification.
 
-== Applications ==
-
-* Layer 2 gossip protocols
-* Make [https://lists.linuxfoundation.org/pipermail/bitcoin-dev/2018-February/015700.html graftroot] spends as efficient as best-case taproot script path spends by aggregating the signature of the surrogate script and signatures that satisfy this script.
-* Improve opcodes that verify multiple signatures, such as [https://lists.linuxfoundation.org/pipermail/bitcoin-dev/2022-February/019926.html OP_EVICT].
-* Cross-input signature aggregation that is non-interactive as opposed to full signature aggregation.
-* Block-wide signature aggregation (but it has downsides related to adaptor sigs and block reorgs)
+=== Test Vectors and Reference Code ===
