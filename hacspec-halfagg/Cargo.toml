@@ -1,0 +1,22 @@
+[package]
+name = "hacspec-halfagg"
+version = "0.1.0"
+authors = ["Jonas Nick <jonasd.nick@gmail.com>"]
+edition = "2018"
+description = "A specification for half-aggregation"
+
+[lib]
+path = "src/halfagg.rs"
+
+[dependencies]
+# TODO: pin version
+hacspec-lib = { git = "https://github.com/jonasnick/hacspec/", branch = "bip-340" }
+hacspec-bip-340 = { git = "https://github.com/jonasnick/hacspec/", branch = "bip-340" }
+
+
+[dev-dependencies]
+quickcheck = "1"
+quickcheck_macros = "1"
+serde_json = "1.0"
+serde = {version = "1.0", features = ["derive"]}
+hacspec-dev = { git = "https://github.com/jonasnick/hacspec/", branch = "bip-340" }

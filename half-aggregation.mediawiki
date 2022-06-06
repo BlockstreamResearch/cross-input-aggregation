@@ -64,7 +64,22 @@ Moreover, they came up with an elegant approach to incremental aggregation that 
 
 == Description ==
 
-=== Notation ===
+=== Specification ===
+
+The specification is written in [https://github.com/hacspec/hacspec hacspec], a language for formal specifications and a subset of rust.
+It can be found in the [[hacspec-halfagg/src/halfagg.rs|hacspec-halfagg directory]].
+Note that the specification depends the hacspec library and a [https://github.com/hacspec/hacspec/pull/244 hacspec implementation of BIP 340].
+
+=== Test Vectors ===
+
+Preliminary test vectors are provided in [[hacspec-halfagg/tests/tests.rs|tests.rs]].
+The specification can be executed with the test vectors by running <code>cargo test</code> in the [[hacspec-halfagg|hacspec-halfagg directory]] (<code>cargo</code> is the [https://doc.rust-lang.org/stable/cargo/ rust package manager]).
+
+=== Pseudocode ===
+
+The following pseudocode is ''not'' a specification but is only intended to augment the actual hacspec [[#specification|specification]].
+
+==== Notation ====
 
 The following conventions are used, with constants as defined for [https://www.secg.org/sec2-v2.pdf secp256k1]. We note that adapting this specification to other elliptic curves is not straightforward and can result in an insecure scheme<ref>Among other pitfalls, using the specification with a curve whose order is not close to the size of the range of the nonce derivation function is insecure.</ref>.
 * Lowercase variables represent integers or byte arrays.
@@ -95,8 +110,6 @@ The following conventions are used, with constants as defined for [https://www.s
 * Other:
 ** Tuples are written by listing the elements within parentheses and separated by commas. For example, ''(2, 3, 1)'' is a tuple.
 
-=== Specification ===
-
 ==== Aggregate ====
 
 ''Aggregate'' takes an array of public key, message and signature triples and returns an aggregate signature.
@@ -109,7 +122,7 @@ Input:
 * Let ''aggsig = bytes(0)''
 * Return ''IncAggregate(aggsig, pms<sub>0..u-1</sub>)''; fail if that fails.
 
-=== IncAggregate ===
+==== IncAggregate ====
 
 ''IncAggregate'' takes an aggregate signature, an array of public key and message tuples corresponding to the aggregate signature, and an additional array of public key, message and signature triples.
 It aggregates the additional array of triples into the existing aggregate signature and returns the resulting new aggregate signature.
@@ -155,5 +168,3 @@ Input:
 * Return success iff no failure occurred before reaching this point.
 
 The verification algorithm is similar to [https://github.com/bitcoin/bips/blob/master/bip-0340.mediawiki#batch-verification BIP340 Batch Verification]. As in BIP340, using an [https://bitcoin.stackexchange.com/a/80702/109853 efficient algorithm for computing the sum of multiple EC multiplications] can significantly speed up verification.
-
-=== Test Vectors and Reference Code ===
