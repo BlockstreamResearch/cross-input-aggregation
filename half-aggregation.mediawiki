@@ -66,7 +66,34 @@ Moreover, they came up with an elegant approach to incremental aggregation that 
 
 === Notation ===
 
-See [https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki|BIP340].
+The following conventions are used, with constants as defined for [https://www.secg.org/sec2-v2.pdf secp256k1]. We note that adapting this specification to other elliptic curves is not straightforward and can result in an insecure scheme<ref>Among other pitfalls, using the specification with a curve whose order is not close to the size of the range of the nonce derivation function is insecure.</ref>.
+* Lowercase variables represent integers or byte arrays.
+** The constant ''p'' refers to the field size, ''0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F''.
+** The constant ''n'' refers to the curve order, ''0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141''.
+* Uppercase variables refer to points on the curve with equation ''y<sup>2</sup> = x<sup>3</sup> + 7'' over the integers modulo ''p''.
+** ''is_infinite(P)'' returns whether or not ''P'' is the point at infinity.
+** ''x(P)'' and ''y(P)'' are integers in the range ''0..p-1'' and refer to the X and Y coordinates of a point ''P'' (assuming it is not infinity).
+** The constant ''G'' refers to the base point, for which ''x(G) = 0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798'' and ''y(G) = 0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8''.
+** Addition of points refers to the usual [https://en.wikipedia.org/wiki/Elliptic_curve#The_group_law elliptic curve group operation].
+** [https://en.wikipedia.org/wiki/Elliptic_curve_point_multiplication Multiplication (⋅) of an integer and a point] refers to the repeated application of the group operation.
+* Functions and operations:
+** ''||'' refers to byte array concatenation.
+** The function ''x[i:j]'', where ''x'' is a byte array and ''i, j &ge; 0'', returns a ''(j - i)''-byte array with a copy of the ''i''-th byte (inclusive) to the ''j''-th byte (exclusive) of ''x''.
+** The function ''bytes(x)'', where ''x'' is an integer, returns the 32-byte encoding of ''x'', most significant byte first.
+** The function ''bytes(P)'', where ''P'' is a point, returns ''bytes(x(P))''.
+** The function ''len(x)'' where ''x'' is a byte array returns the length of the array.
+** The function ''int(x)'', where ''x'' is a 32-byte array, returns the 256-bit unsigned integer whose most significant byte first encoding is ''x''.
+** The function ''has_even_y(P)'', where ''P'' is a point for which ''not is_infinite(P)'', returns ''y(P) mod 2 = 0''.
+** The function ''lift_x(x)'', where ''x'' is a 256-bit unsigned integer, returns the point ''P'' for which ''x(P) = x''<ref>
+    Given a candidate X coordinate ''x'' in the range ''0..p-1'', there exist either exactly two or exactly zero valid Y coordinates. If no valid Y coordinate exists, then ''x'' is not a valid X coordinate either, i.e., no point ''P'' exists for which ''x(P) = x''. The valid Y coordinates for a given candidate ''x'' are the square roots of ''c = x<sup>3</sup> + 7 mod p'' and they can be computed as ''y = &plusmn;c<sup>(p+1)/4</sup> mod p'' (see [https://en.wikipedia.org/wiki/Quadratic_residue#Prime_or_prime_power_modulus Quadratic residue]) if they exist, which can be checked by squaring and comparing with ''c''.</ref> and ''has_even_y(P)'', or fails if ''x'' is greater than ''p-1'' or no such point exists. The function ''lift_x(x)'' is equivalent to the following pseudocode:
+*** Fail if ''x &ge; p''.
+*** Let ''c = x<sup>3</sup> + 7 mod p''.
+*** Let ''y = c<sup>(p+1)/4</sup> mod p''.
+*** Fail if ''c &ne; y<sup>2</sup> mod p''.
+*** Return the unique point ''P'' such that ''x(P) = x'' and ''y(P) = y'' if ''y mod 2 = 0'' or ''y(P) = p-y'' otherwise.
+** The function ''hash<sub>tag</sub>(x)'' where ''tag'' is a UTF-8 encoded tag name and ''x'' is a byte array returns the 32-byte hash ''SHA256(SHA256(tag) || SHA256(tag) || x)''.
+* Other:
+** Tuples are written by listing the elements within parentheses and separated by commas. For example, ''(2, 3, 1)'' is a tuple.
 
 === Specification ===
 
