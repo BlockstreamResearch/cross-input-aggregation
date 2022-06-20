@@ -72,53 +72,59 @@ See [https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki|BIP340].
 
 ==== Aggregate ====
 
-Input:
-* The number ''u'' of signatures to aggregate with ''0 < u < 2^32''
-* The public keys ''pk<sub>1..u</sub>'': ''u'' 32-byte arrays
-* The messages ''m<sub>1..u</sub>'': ''u'' 32-byte arrays
-* The signatures ''sig<sub>1..u</sub>'': ''u'' 64-byte arrays
+''Aggregate'' takes an array of public key, message and signature triples and returns an aggregate signature.
+If for every triple ''(p, m, s)'' we have that ''Verify(p, m, s)'' (as defined in BIP 340) returns true, then the returned aggregate signature and the array of ''(p, m)'' tuples passes ''VerifyAggregate''.
 
-The algorithm ''Aggregate(pk<sub>1..u</sub>, m<sub>1..u</sub>, sig<sub>1..u</sub>)'' is defined as:
+Input:
+* ''pms<sub>0..u-1</sub>'': an array of ''u'' triples, where the first element of each triple is a 32-byte public key, the second element is a 32-byte message and the third element is a 64-byte BIP 340 signature
+
+'''''Aggregate(pms<sub>0..u-1</sub>)''''':
 * Let ''aggsig = bytes(0)''
-* Return ''IncAggregate(0, aggsig, u, pk<sub>1..u</sub>, m<sub>1..u</sub>, sig<sub>1..u</sub>)''.
+* Return ''IncAggregate(aggsig, pms<sub>0..u-1</sub>)''; fail if that fails.
 
 === IncAggregate ===
 
-Input:
-* The number ''v'' of aggregated signatures with ''0 &le; v < 2^32''
-* The aggregate signature ''aggsig'' : ''(v+1)⋅32''-byte array
-* The number ''u'' of signatures to add to aggregate with ''0 < u < 2^32''
-* The public keys ''pk<sub>1..v+u</sub>'': ''v+u'' 32-byte arrays
-* The messages ''m<sub>1..v+u</sub>'': ''v+u'' 32-byte arrays
-* The signatures ''sig<sub>v+1..v+u</sub>'': ''u'' 64-byte arrays
+''IncAggregate'' takes an aggregate signature, an array of public key and message tuples corresponding to the aggregate signature, and an additional array of public key, message and signature triples.
+It aggregates the additional array of triples into the existing aggregate signature and returns the resulting new aggregate signature.
+In other words, if ''VerifyAggregate(aggsig, pm_aggd)'' passes and for every triple ''(p, m, s)'' in ''pms_to_agg'' we have that ''Verify(p, m, s)'' (as defined in BIP 340) returns true, then the returned aggregate signature along with the array of ''(p, m)'' tuples of ''pm_aggd'' and ''pms_to_agg'' passes ''VerifyAggregate''.
 
-The algorithm ''IncAggregate(v, aggsig, u, pk<sub>1..v+u</sub>, m<sub>1..v+u</sub>, sig<sub>v+1..v+u</sub>)'' is defined as:
-* For ''i = 1 .. v'':
-** Let ''r<sub>i</sub> = aggsig[(i-1)⋅32:i⋅32]''
-* For ''i = v+1 .. v+u'':
+Input:
+* ''aggsig'' : a byte array
+* ''pm_aggd<sub>0..v-1</sub>'': an array of ''v'' tuples, where the first element of each tuple is a 32-byte public key and the second element is a 32-byte message
+* ''pms_to_agg<sub>0..u-1</sub>'': an array of ''u'' triples, where the first element of each tuple is a 32-byte public key, the second element is a 32-byte message and the third element is a 64-byte BIP 340 signature
+
+'''''IncAggregate(aggsig, pm_aggd<sub>0..v-1</sub>, pms_to_agg<sub>0..u-1</sub>)''''':
+* Fail if ''len(aggsig) &ne; 32 * (v + 1)''
+* For ''i = 0 .. v-1'':
+** Let ''(pk<sub>i</sub>, m<sub>i</sub>) = pm_aggd<sub>i</sub>''
+** Let ''r<sub>i</sub> = aggsig[i⋅32:(i+1)⋅32]''
+* For ''i = v .. v+u-1'':
+** Let ''(pk<sub>i</sub>, m<sub>i</sub>, sig<sub>i</sub>) = pms_to_agg<sub>i-v</sub>''
 ** Let ''r<sub>i</sub> = sig<sub>i</sub>[0:32]''
 ** Let ''s<sub>i</sub> = int(sig<sub>i</sub>[32:64])''
-** Let ''z<sub>i</sub> = int(hash<sub>HalfAgg/randomizer</sub>(r<sub>1</sub> || pk<sub>1</sub> || m<sub>1</sub> || ... || r<sub>i</sub> || pk<sub>i</sub> || m<sub>i</sub>)) mod n''
-* Let ''s = int(aggsig[v⋅32:(v+1)⋅32]) + z<sub>v+1</sub>⋅s<sub>v+1</sub> + ... + z<sub>v+u</sub>⋅s<sub>v+u</sub> mod n''
-* Return ''r<sub>1</sub> || ... || r<sub>v+u</sub> || bytes(s)''
+** Let ''z<sub>i</sub> = int(hash<sub>HalfAgg/randomizer</sub>(r<sub>0</sub> || pk<sub>0</sub> || m<sub>0</sub> || ... || r<sub>i</sub> || pk<sub>i</sub> || m<sub>i</sub>)) mod n''
+* Let ''s = int(aggsig[(v⋅32:(v+1)⋅32]) + z<sub>v</sub>⋅s<sub>v</sub> + ... + z<sub>v+u-1</sub>⋅s<sub>v+u-1</sub> mod n''
+* Return ''r<sub>0</sub> || ... || r<sub>v+u-1</sub> || bytes(s)''
 
 ==== VerifyAggregate ====
 
-Input:
-* The number ''u'' aggregated signatures with ''0 < u < 2^32''
-* The aggregate signature ''aggsig'' : ''(u+1)⋅32''-byte array
-* The public keys ''pk<sub>1..u</sub>'': ''u'' 32-byte arrays
-* The messages ''m<sub>1..u</sub>'': ''u'' 32-byte arrays
+''VerifyAggregate'' verifies a given aggregate signature against an array of public key and message tuples.
 
-The algorithm ''VerifyAggregate(aggsig, pk<sub>1..u</sub>, m<sub>1..u</sub>)'' is defined as:
-* For ''i = 1 .. u'':
+Input:
+* ''aggsig'' : a byte array
+* ''pm_aggd<sub>0..u-1</sub>'': an array of ''u'' tuples, where the first element of each tuple is a 32-byte public key and the second element is a 32-byte message
+
+'''''VerifyAggregate(aggsig, pm_aggd<sub>0..u-1</sub>)''''':
+* Fail if ''len(aggsig) &ne; 32 * (u + 1)''
+* For ''i = 0 .. u-1'':
+** Let ''(pk<sub>i</sub>, m<sub>i</sub>) = pm_aggd<sub>i</sub>''
 ** Let ''P<sub>i</sub> = lift_x(int(pk<sub>i</sub>))''; fail if that fails
-** Let ''r<sub>i</sub> = aggsig[(i-1)⋅32:i⋅32]''
+** Let ''r<sub>i</sub> = aggsig[i⋅32:(i+1)⋅32]''
 ** Let ''R<sub>i</sub> = lift_x(int(r<sub>i</sub>))''; fail if that fails
 ** Let ''e<sub>i</sub> = int(hash<sub>BIP0340/challenge</sub>(bytes(r<sub>i</sub>) || pk<sub>i</sub> || m<sub>i</sub>)) mod n''
-** Let ''z<sub>i</sub> = int(hash<sub>HalfAgg/randomizer</sub>(r<sub>1</sub> || pk<sub>1</sub> || m<sub>1</sub> || ... || r<sub>i</sub> || pk<sub>i</sub> || m<sub>i</sub>)) mod n''
+** Let ''z<sub>i</sub> = int(hash<sub>HalfAgg/randomizer</sub>(r<sub>0</sub> || pk<sub>0</sub> || m<sub>0</sub> || ... || r<sub>i</sub> || pk<sub>i</sub> || m<sub>i</sub>)) mod n''
 * Let ''s = int(sig[u⋅32:(u+1)⋅32]); fail if ''s &ge; p''
-* Fail if ''s⋅G &ne; z<sub>1</sub>⋅R<sub>1</sub> + ... + z<sub>u</sub>⋅R<sub>u</sub> + z<sub>1</sub>⋅e<sub>1</sub>⋅P<sub>1</sub> + ... + z<sub>u</sub>⋅e<sub>u</sub>⋅P<sub>u</sub>''
+* Fail if ''s⋅G &ne; z<sub>0</sub>⋅(R<sub>0</sub> + e<sub>0</sub>⋅P<sub>0</sub>) + ... + z<sub>u-1</sub>⋅(R<sub>u-1</sub> + e<sub>u-1</sub>⋅P<sub>u-1</sub>)''
 * Return success iff no failure occurred before reaching this point.
 
 The verification algorithm is similar to [https://github.com/bitcoin/bips/blob/master/bip-0340.mediawiki#batch-verification BIP340 Batch Verification]. As in BIP340, using an [https://bitcoin.stackexchange.com/a/80702/109853 efficient algorithm for computing the sum of multiple EC multiplications] can significantly speed up verification.
