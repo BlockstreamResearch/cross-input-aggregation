@@ -5,6 +5,7 @@ use hacspec_lib::*;
 pub enum Error {
     InvalidPublicKey(usize),
     InvalidSignature,
+    AggSigTooBig,
     MalformedSignature,
 }
 
@@ -36,6 +37,10 @@ pub fn inc_aggregate(
     pm_aggd: &Seq<(PublicKey, Message)>,
     pms_to_agg: &Seq<(PublicKey, Message, Signature)>,
 ) -> AggregateResult {
+    let (sum, overflow) = pm_aggd.len().overflowing_add(pms_to_agg.len());
+    if overflow || sum > 0xffff {
+        AggregateResult::Err(Error::AggSigTooBig)?;
+    }
     if aggsig.len() != 32 * (pm_aggd.len() + 1) {
         AggregateResult::Err(Error::MalformedSignature)?;
     }
@@ -79,6 +84,9 @@ fn point_multi_mul(b: Scalar, terms: &Seq<(Scalar, AffinePoint)>) -> Point {
 
 pub type VerifyResult = Result<(), Error>;
 pub fn verify_aggregate(aggsig: &AggSig, pm_aggd: &Seq<(PublicKey, Message)>) -> VerifyResult {
+    if pm_aggd.len() > 0xffff {
+        VerifyResult::Err(Error::AggSigTooBig)?;
+    }
     if aggsig.len() != 32 * (pm_aggd.len() + 1) {
         VerifyResult::Err(Error::InvalidSignature)?;
     }
