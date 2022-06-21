@@ -48,7 +48,6 @@ It refers to a process where block producers aggregate as many transaction signa
 In the best case, a full block would only have a single half-aggregate signature.
 While this is attractive from the efficiency perspective, block-wide aggregation requires more research (and, in particular, special attention to handling
 [https://github.com/ElementsProject/cross-input-aggregation#half-aggregation-and-reorgs reorgs]).
->>>>>>> c7f6c1f (half-aggregation: rearrange and add motivation section)
 
 === Design ===
 
@@ -80,7 +79,7 @@ Input:
 * The signatures ''sig<sub>1..u</sub>'': ''u'' 64-byte arrays
 
 The algorithm ''Aggregate(pk<sub>1..u</sub>, m<sub>1..u</sub>, sig<sub>1..u</sub>)'' is defined as:
-* Let ''aggsig = bytes(0)''; fail if that fails.
+* Let ''aggsig = bytes(0)''
 * Return ''IncAggregate(0, aggsig, u, pk<sub>1..u</sub>, m<sub>1..u</sub>, sig<sub>1..u</sub>)''.
 
 === IncAggregate ===
@@ -114,7 +113,7 @@ Input:
 The algorithm ''VerifyAggregate(aggsig, pk<sub>1..u</sub>, m<sub>1..u</sub>)'' is defined as:
 * For ''i = 1 .. u'':
 ** Let ''P<sub>i</sub> = lift_x(int(pk<sub>i</sub>))''; fail if that fails
-** Let ''r<sub>i</sub> = aggsig[(i-1)⋅32:i⋅32]''; fail if ''r<sub>i</sub> &ge; p''
+** Let ''r<sub>i</sub> = aggsig[(i-1)⋅32:i⋅32]''
 ** Let ''R<sub>i</sub> = lift_x(int(r<sub>i</sub>))''; fail if that fails
 ** Let ''e<sub>i</sub> = int(hash<sub>BIP0340/challenge</sub>(bytes(r<sub>i</sub>) || pk<sub>i</sub> || m<sub>i</sub>)) mod n''
 ** Let ''z<sub>i</sub> = int(hash<sub>HalfAgg/randomizer</sub>(r<sub>1</sub> || pk<sub>1</sub> || m<sub>1</sub> || ... || r<sub>i</sub> || pk<sub>i</sub> || m<sub>i</sub>)) mod n''
