@@ -7,7 +7,7 @@
 === Abstract ===
 
 This document describes ''half-aggregation'' of BIP 340 signatures.
-Half-aggregation is the process of aggregating a collection of signatures into a single aggregate signature.
+Half-aggregation is a process for aggregating a collection of signatures into a single aggregate signature.
 The size of the resulting aggregate signature is approximately half of the combined size of the original signatures.
 
 === Copyright ===
@@ -58,9 +58,9 @@ In 2021 [https://eprint.iacr.org/2021/350 Chalkias, Garillot, Kondi and Nikolaen
 [https://eprint.iacr.org/2022/222.pdf Chen and Zhao] were able to produce a tight proof in the ROM and algebraic group model in the following year.
 Moreover, they came up with an elegant approach to incremental aggregation that is used in this document.
 
-* Incremental aggregation allows non-interactively aggregating BIP 340 signatures into an existing half-aggregate signature.
+* Incremental aggregation allows non-interactively aggregating additional BIP 340 signatures into an existing half-aggregate signature.
 * A half-aggregate signature of ''u'' BIP 340 input signatures is serialized as the ''(u+1)⋅32''-byte array ''r<sub>1</sub> || ... || r<sub>u</sub> || bytes(s)'' where ''r<sub>i</sub>'' is a 32-byte array from input signature ''i'' and ''s'' is a scalar aggregate (see below for details).
-* This document does _not_ specify the aggregation of multiple aggregate signatures (yet). It is possible, but requires changing the encoding of an aggregate signature. Since it is not possible to undo the aggregation of the s-values, when verifying of such an aggregate signature the randomizers need to be the same as when verifying the individual aggregate signature. Therefore, the aggregate signature needs encode a tree that reveals how the individual signatures were aggregated and how the resulting aggregate signatures were reaggregated.
+* This document does ''not'' specify the aggregation of multiple aggregate signatures (yet). It is possible, but requires changing the encoding of an aggregate signature. Since it is not possible to undo the aggregation of the s-values, when verifying of such an aggregate signature the randomizers need to be the same as when verifying the individual aggregate signature. Therefore, the aggregate signature needs encode a tree that reveals how the individual signatures were aggregated and how the resulting aggregate signatures were reaggregated.
 
 == Description ==
 
