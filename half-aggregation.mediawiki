@@ -1,5 +1,6 @@
 <pre>
   Title: Half-Aggregation of BIP 340 signatures
+  Status: EXPERIMENTAL
 </pre>
 
 == Introduction ==

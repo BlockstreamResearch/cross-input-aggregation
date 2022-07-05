@@ -1,3 +1,6 @@
+//! WARNING: This specification is EXPERIMENTAL and has _not_ received adequate
+//! security review.
+
 use hacspec_bip_340::*;
 use hacspec_lib::*;
 
