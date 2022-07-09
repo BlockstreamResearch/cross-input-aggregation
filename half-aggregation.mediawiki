@@ -8,7 +8,7 @@
 === Abstract ===
 
 This document describes ''half-aggregation'' of BIP 340 signatures.
-Half-aggregation is a process for aggregating a collection of signatures into a single aggregate signature.
+Half-aggregation is a non-interactive process for aggregating a collection of signatures into a single aggregate signature.
 The size of the resulting aggregate signature is approximately half of the combined size of the original signatures.
 
 === Copyright ===
