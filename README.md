@@ -57,7 +57,9 @@ Taproot & Tapscript provide multiple upgrade paths:
 - **Define new leaf version to replace tapscript:** If the new scripting system has `OP_SUCCESS` then this does not solve the problem.
 - **Define new SegWit version:**
     It is possible to define a new SegWit version that is a copy of Taproot & Tapscript with the exception that all keyspend signatures are allowed to be aggregated.
-    However, keyspends can not be aggregated with other SegWit versions.
+    On the other hand, if the goal is that aggregation is _only_ possible for keyspends, then defining a new SegWit version is necessary (since Taproot keyspends expects a BIP-340 signature and not some aggregated signature).
+    However, keyspends can not be aggregated across SegWit versions:
+    nodes that do not recognize the newest SegWit version are not able to pick up the public keys and messages that the aggregate signature is supposed to be verified with.
 
 Assume that a new SegWit version is defined to deploy aggregate signatures by copying Taproot and Tapscript and allowing only keyspends to be aggregated.
 This would be limiting.
@@ -108,7 +110,6 @@ There are the following two cases where half aggregation affects the reorganizat
 
 Both cases would indicate that it is beneficial to keep `s0` even though the transaction is included in the best chain.
 Only when the transaction is buried so deep that reorgs can be ruled out, the value `s0` can be discarded.
-This approach is certainly not fully satisfying.
 
 Another solution for case 2. is to have the participants of the transaction (such as sender and receiver) rebroadcast the transaction.
 But this may have privacy issues.
