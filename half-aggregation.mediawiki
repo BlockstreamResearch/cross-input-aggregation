@@ -168,7 +168,7 @@ The algorithm ''VerifyAggregate(aggsig, pm_aggd<sub>0..u-1</sub>)'' is defined a
 ** Let ''R<sub>i</sub> = lift_x(int(r<sub>i</sub>))''; fail if that fails
 ** Let ''e<sub>i</sub> = int(hash<sub>BIP0340/challenge</sub>(bytes(r<sub>i</sub>) || pk<sub>i</sub> || m<sub>i</sub>)) mod n''
 ** Let ''z<sub>i</sub> = int(hash<sub>HalfAgg/randomizer</sub>(r<sub>0</sub> || pk<sub>0</sub> || m<sub>0</sub> || ... || r<sub>i</sub> || pk<sub>i</sub> || m<sub>i</sub>)) mod n''
-* Let ''s = int(sig[u⋅32:(u+1)⋅32]); fail if ''s &ge; p''
+* Let ''s = int(aggsig[u⋅32:(u+1)⋅32]); fail if ''s &ge; n''
 * Fail if ''s⋅G &ne; z<sub>0</sub>⋅(R<sub>0</sub> + e<sub>0</sub>⋅P<sub>0</sub>) + ... + z<sub>u-1</sub>⋅(R<sub>u-1</sub> + e<sub>u-1</sub>⋅P<sub>u-1</sub>)''
 * Return success iff no failure occurred before reaching this point.
 
