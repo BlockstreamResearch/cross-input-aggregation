@@ -124,3 +124,4 @@ This should not be any less efficient in g'root if the output can be spend direc
 However, since this is not a normal keypath spend and explicitly unaggregatable, such a spend will stick out from other transactions.
 It is an open question if this actually affects protocols built on adaptor signatures.
 In other words, can such protocols can be instantiated with a Tapscript spending path for the adaptor signature but without having to use actually use that path - at least in the cooperative case?
+See [half-agg-and-adaptor-sigs.md](half-agg-and-adaptor-sigs.md) for more discussion on this subject.
