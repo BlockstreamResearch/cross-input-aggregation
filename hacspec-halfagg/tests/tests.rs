@@ -81,16 +81,15 @@ fn test_verify_vectors() {
         (vec![],
          "0000000000000000000000000000000000000000000000000000000000000000"),
         (vec![("1b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f", "0202020202020202020202020202020202020202020202020202020202020202"),],
-         "b070aafcea439a4f6f1bbfc2eb66d29d24b0cab74d6b745c3cfb009cc8fe4aa837387e8aff16b773d5f31ba82f6cb6bbeb757c707f43af0d559e782b7fd19da9"),
+         "b070aafcea439a4f6f1bbfc2eb66d29d24b0cab74d6b745c3cfb009cc8fe4aa8108f33907612fb748419ebc4004b3169e16e35d5f12b693b6bbc3d4a6982f2f6"),
         (vec![("1b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f", "0202020202020202020202020202020202020202020202020202020202020202"),
               ("462779ad4aad39514614751a71085f2f10e1c7a593e4e030efb5b8721ce55b0b", "0505050505050505050505050505050505050505050505050505050505050505"),],
-         "b070aafcea439a4f6f1bbfc2eb66d29d24b0cab74d6b745c3cfb009cc8fe4aa8a3afbdb45a6a34bf7c8c00f1b6d7e7d375b54540f13716c87b62e51e2f4f22ffcc0b8ae4598b28aa30ec01ce33423fb90462b43f25167aec10a9a08b19782667"),
+         "b070aafcea439a4f6f1bbfc2eb66d29d24b0cab74d6b745c3cfb009cc8fe4aa8a3afbdb45a6a34bf7c8c00f1b6d7e7d375b54540f13716c87b62e51e2f4f22ffc211db48479c2f546d52b07955e764eb6a142d577245f40a44f5dee468da4244"),
     ];
     let vectors = test_verify_vectors_process(&vectors_raw);
     // Uncomment to generate and print test vectors:
     // let vectors_expected = test_verify_vectors_gen();
     // test_verify_vectors_print(&vectors_expected);
-    // TODO: fix assert_eq!(vectors, vectors_expected);
     for i in 0..vectors.len() {
         let aggsig = &vectors[i].1;
         let pm = &vectors[i].0;

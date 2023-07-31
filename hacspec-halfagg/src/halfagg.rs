@@ -24,7 +24,7 @@ pub fn hash_halfagg(input: &Seq<(PublicKey, Message, Bytes32)>) -> Bytes32 {
     let mut c = ByteSeq::new(0);
     for i in 0..input.len() {
         let (pk, msg, rx) = input[i];
-        c = c.concat(&pk).concat(&msg).concat(&rx);
+        c = c.concat(&rx).concat(&pk).concat(&msg);
     }
     tagged_hash(&PublicByteSeq::from_seq(&HALFAGG_RANDOMIZER), &c)
 }
