@@ -144,9 +144,10 @@ Input:
 * For ''i = v .. v+u-1'':
 ** Let ''(pk<sub>i</sub>, m<sub>i</sub>, sig<sub>i</sub>) = pms_to_agg<sub>i-v</sub>''
 ** Let ''r<sub>i</sub> = sig<sub>i</sub>[0:32]''
-** Let ''s<sub>i</sub> = int(sig<sub>i</sub>[32:64])''
+** Let ''s<sub>i</sub> = int(sig<sub>i</sub>[32:64])''; fail if ''s<sub>i</sub> &ge; n''
 ** Let ''z<sub>i</sub> = int(hash<sub>HalfAgg/randomizer</sub>(r<sub>0</sub> || pk<sub>0</sub> || m<sub>0</sub> || ... || r<sub>i</sub> || pk<sub>i</sub> || m<sub>i</sub>)) mod n''
-* Let ''s = int(aggsig[(v⋅32:(v+1)⋅32]) + z<sub>v</sub>⋅s<sub>v</sub> + ... + z<sub>v+u-1</sub>⋅s<sub>v+u-1</sub> mod n''
+* Let ''q = int(aggsig[(v⋅32:(v+1)⋅32]))''; fail if ''q &ge; n''
+* Let ''s = q + z<sub>v</sub>⋅s<sub>v</sub> + ... + z<sub>v+u-1</sub>⋅s<sub>v+u-1</sub> mod n''
 * Return ''r<sub>0</sub> || ... || r<sub>v+u-1</sub> || bytes(s)''
 
 ==== VerifyAggregate ====
