@@ -115,7 +115,8 @@ The following conventions are used, with constants as defined for [https://www.s
 ==== Aggregate ====
 
 ''Aggregate'' takes an array of public key, message and signature triples and returns an aggregate signature.
-If for every triple ''(p, m, s)'' we have that ''Verify(p, m, s)'' (as defined in BIP 340) returns true, then the returned aggregate signature and the array of ''(p, m)'' tuples passes ''VerifyAggregate''.
+If every triple ''(p, m, s)'' is valid (i.e., ''Verify(p, m, s)'' as defined in BIP 340 returns true), then the returned aggregate signature and the array of ''(p, m)'' tuples passes ''VerifyAggregate''.
+(However, the inverse does not hold: given suitable valid triples, it is possible to construct an input array to ''Aggregate'' which contains invalid triples, but for which ''VerifyAggregate'' will accept the aggregate signature returned by ''Aggregate''. If this is undesired, input triples should be verified individually before passing them to ''Aggregate''.)
 
 Input:
 * ''pms<sub>0..u-1</sub>'': an array of ''u'' triples, where the first element of each triple is a 32-byte public key, the second element is a 32-byte message and the third element is a 64-byte BIP 340 signature
@@ -128,7 +129,8 @@ Input:
 
 ''IncAggregate'' takes an aggregate signature, an array of public key and message tuples corresponding to the aggregate signature, and an additional array of public key, message and signature triples.
 It aggregates the additional array of triples into the existing aggregate signature and returns the resulting new aggregate signature.
-In other words, if ''VerifyAggregate(aggsig, pm_aggd)'' passes and for every triple ''(p, m, s)'' in ''pms_to_agg'' we have that ''Verify(p, m, s)'' (as defined in BIP 340) returns true, then the returned aggregate signature along with the array of ''(p, m)'' tuples of ''pm_aggd'' and ''pms_to_agg'' passes ''VerifyAggregate''.
+In other words, if ''VerifyAggregate(aggsig, pm_aggd)'' passes and every triple ''(p, m, s)'' in ''pms_to_agg'' is valid (i.e., ''Verify(p, m, s)'' as defined in BIP 340 returns true), then the returned aggregate signature along with the array of ''(p, m)'' tuples of ''pm_aggd'' and ''pms_to_agg'' passes ''VerifyAggregate''.
+(However, the inverse does not hold: given a suitable valid aggregate signature and suitable valid triples, it is possible to construct inputs to ''IncAggregate'' which contain an invalid aggregate signature or invalid triples, but for which ''VerifyAggregate'' will accept the aggregate signature returned by ''IncAggregate''. If this is undesired, the input triples and the input aggregate signature should be verified individually before passing them to ''IncAggregate''.)
 
 Input:
 * ''aggsig'' : a byte array
