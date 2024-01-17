@@ -31,12 +31,16 @@ pub fn hash_halfagg(input: &Seq<(PublicKey, Message, Bytes32)>) -> Bytes32 {
 }
 
 pub fn randomizer(pmr: &Seq<(PublicKey, Message, Bytes32)>, index: usize) -> Scalar {
-    // TODO: The following line hashes i elements and therefore leads to
-    // quadratic runtime. Instead, we should cache the intermediate result
-    // and only hash the new element.
-    scalar_from_bytes(hash_halfagg(
-        &Seq::<(PublicKey, Message, Bytes32)>::from_slice(pmr, 0, index + 1),
-    ))
+    if index == 0 {
+        Scalar::ONE()
+    } else {
+        // TODO: The following line hashes i elements and therefore leads to
+        // quadratic runtime. Instead, we should cache the intermediate result
+        // and only hash the new element.
+        scalar_from_bytes(hash_halfagg(
+            &Seq::<(PublicKey, Message, Bytes32)>::from_slice(pmr, 0, index + 1),
+        ))
+    }
 }
 
 pub type AggregateResult = Result<AggSig, Error>;
