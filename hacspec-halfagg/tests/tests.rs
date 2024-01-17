@@ -211,5 +211,7 @@ fn test_edge_cases() {
         inc_aggregate(&aggsig, &empty_pm, &big_pms).unwrap_err()
             == hacspec_halfagg::Error::AggSigTooBig
     );
-    assert!(verify_aggregate(&aggsig, &big_pm).unwrap_err() == hacspec_halfagg::Error::AggSigTooBig);
+    assert!(
+        verify_aggregate(&aggsig, &big_pm).unwrap_err() == hacspec_halfagg::Error::AggSigTooBig
+    );
 }
