@@ -154,12 +154,7 @@ fn test_aggregate_verify_strange() {
     for i in 0..2 {
         let (pk, msg, sig) = pms_triples[i];
         pmr = pmr.push(&(pk, msg, Bytes32::from_slice(&sig, 0, 32)));
-        // TODO: The following line hashes i elements and therefore leads to
-        // quadratic runtime. Instead, we should cache the intermediate result
-        // and only hash the new element.
-        z = z.push(&scalar_from_bytes(hash_halfagg(
-            &Seq::<(PublicKey, Message, Bytes32)>::from_slice(&pmr, 0, i + 1),
-        )));
+        z = z.push(&randomizer(&pmr, i));
     }
 
     // Shift signatures appropriately

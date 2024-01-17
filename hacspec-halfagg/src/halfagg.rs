@@ -20,6 +20,7 @@ const HALFAGG_RANDOMIZER: TaggedHashHalfAggPrefix = TaggedHashHalfAggPrefix([
     0x48u8, 0x61u8, 0x6cu8, 0x66u8, 0x41u8, 0x67u8, 0x67u8, 0x2fu8, 0x72u8, 0x61u8, 0x6eu8, 0x64u8,
     0x6fu8, 0x6du8, 0x69u8, 0x7au8, 0x65u8, 0x72u8,
 ]);
+
 pub fn hash_halfagg(input: &Seq<(PublicKey, Message, Bytes32)>) -> Bytes32 {
     let mut c = ByteSeq::new(0);
     for i in 0..input.len() {
@@ -27,6 +28,15 @@ pub fn hash_halfagg(input: &Seq<(PublicKey, Message, Bytes32)>) -> Bytes32 {
         c = c.concat(&rx).concat(&pk).concat(&msg);
     }
     tagged_hash(&PublicByteSeq::from_seq(&HALFAGG_RANDOMIZER), &c)
+}
+
+pub fn randomizer(pmr: &Seq<(PublicKey, Message, Bytes32)>, index: usize) -> Scalar {
+    // TODO: The following line hashes i elements and therefore leads to
+    // quadratic runtime. Instead, we should cache the intermediate result
+    // and only hash the new element.
+    scalar_from_bytes(hash_halfagg(
+        &Seq::<(PublicKey, Message, Bytes32)>::from_slice(pmr, 0, index + 1),
+    ))
 }
 
 pub type AggregateResult = Result<AggSig, Error>;
@@ -59,12 +69,7 @@ pub fn inc_aggregate(
     for i in v..v + u {
         let (pk, msg, sig) = pms_to_agg[i - v];
         pmr[i] = (pk, msg, Bytes32::from_slice(&sig, 0, 32));
-        // TODO: The following line hashes i elements and therefore leads to
-        // quadratic runtime. Instead, we should cache the intermediate result
-        // and only hash the new element.
-        let z = scalar_from_bytes(hash_halfagg(
-            &Seq::<(PublicKey, Message, Bytes32)>::from_slice(&pmr, 0, i + 1),
-        ));
+        let z = randomizer(&pmr, i);
         s = s + z * Scalar::from_byte_seq_be(&Bytes32::from_slice(&sig, 32, 32));
     }
     let mut ret = Seq::<U8>::new(0);
@@ -113,12 +118,7 @@ pub fn verify_aggregate(aggsig: &AggSig, pm_aggd: &Seq<(PublicKey, Message)>) ->
         let r = r_res.unwrap();
         let e = scalar_from_bytes(hash_challenge(rx, bytes_from_point(p), msg));
         pmr[i] = (pk, msg, rx);
-        // TODO: The following line hashes i elements and therefore leads to
-        // quadratic runtime. Instead, we should cache the intermediate result
-        // and only hash the new element.
-        let z = scalar_from_bytes(hash_halfagg(
-            &Seq::<(PublicKey, Message, Bytes32)>::from_slice(&pmr, 0, i + 1),
-        ));
+        let z = randomizer(&pmr, i);
         terms[2 * i] = (z, r);
         terms[2 * i + 1] = (z * e, p);
     }
