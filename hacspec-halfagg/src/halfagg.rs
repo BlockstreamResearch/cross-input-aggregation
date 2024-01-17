@@ -54,8 +54,7 @@ pub fn inc_aggregate(
         let (pk, msg) = pm_aggd[i];
         pmr[i] = (pk, msg, Bytes32::from_slice(aggsig, 32 * i, 32));
     }
-    let mut s = scalar_from_bytes_strict(Bytes32::from_seq(&aggsig.slice(32 * v, 32)))
-        .ok_or(Error::MalformedSignature)?;
+    let mut s = Scalar::from_byte_seq_be(&aggsig.slice(32 * v, 32));
 
     for i in v..v + u {
         let (pk, msg, sig) = pms_to_agg[i - v];
@@ -66,9 +65,7 @@ pub fn inc_aggregate(
         let z = scalar_from_bytes(hash_halfagg(
             &Seq::<(PublicKey, Message, Bytes32)>::from_slice(&pmr, 0, i + 1),
         ));
-        let si = scalar_from_bytes_strict(Bytes32::from_slice(&sig, 32, 32))
-            .ok_or(Error::MalformedSignature)?;
-        s = s + z * si;
+        s = s + z * Scalar::from_byte_seq_be(&Bytes32::from_slice(&sig, 32, 32));
     }
     let mut ret = Seq::<U8>::new(0);
     for i in 0..pmr.len() {

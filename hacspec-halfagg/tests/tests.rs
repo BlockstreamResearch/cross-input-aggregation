@@ -1,4 +1,5 @@
 use hacspec_bip_340::*;
+use hacspec_dev::rand::*;
 use hacspec_halfagg::*;
 use hacspec_lib::*;
 
@@ -127,6 +128,60 @@ fn test_aggregate_verify() {
             assert!(verify_aggregate(&aggsig, &pm_tuples).is_ok());
         }
     }
+}
+
+/// Constructs two invalid signatures whose aggregate signature is valid
+#[test]
+fn test_aggregate_verify_strange() {
+    let mut pms_triples = Seq::<(PublicKey, Message, Signature)>::new(0);
+    for i in 0..2 {
+        let sk = [i as u8 + 1; 32];
+        let sk = SecretKey::from_public_array(sk);
+        let msg = [i as u8 + 2; 32];
+        let msg = Message::from_public_array(msg);
+        let aux_rand = [i as u8 + 3; 32];
+        let aux_rand = AuxRand::from_public_array(aux_rand);
+        let sig = sign(msg, sk, aux_rand).unwrap();
+        pms_triples = pms_triples.push(&(pubkey_gen(sk).unwrap(), msg, sig));
+    }
+    let aggsig = aggregate(&pms_triples).unwrap();
+    let pm_tuples = strip_sigs(&pms_triples);
+    assert!(verify_aggregate(&aggsig, &pm_tuples).is_ok());
+
+    // Compute z values like in IncAggegrate
+    let mut pmr = Seq::<(PublicKey, Message, Bytes32)>::new(0);
+    let mut z = Seq::new(0);
+    for i in 0..2 {
+        let (pk, msg, sig) = pms_triples[i];
+        pmr = pmr.push(&(pk, msg, Bytes32::from_slice(&sig, 0, 32)));
+        // TODO: The following line hashes i elements and therefore leads to
+        // quadratic runtime. Instead, we should cache the intermediate result
+        // and only hash the new element.
+        z = z.push(&scalar_from_bytes(hash_halfagg(
+            &Seq::<(PublicKey, Message, Bytes32)>::from_slice(&pmr, 0, i + 1),
+        )));
+    }
+
+    // Shift signatures appropriately
+    let sagg = scalar_from_bytes(Bytes32::from_seq(&aggsig.slice(32 * 2, 32)));
+    let s1: [u8; 32] = random_bytes();
+    let s1 = scalar_from_bytes(Bytes32::from_public_array(s1));
+    // Division is ordinary integer division, so use inv() explicitly
+    let s0 = (sagg - z[1] * s1) * (z[0] as Scalar).inv();
+
+    let (pk0, msg0, sig0): (PublicKey, Message, Signature) = pms_triples[0];
+    let (pk1, msg1, sig1): (PublicKey, Message, Signature) = pms_triples[1];
+    let sig0_invalid = sig0.update(32, &bytes_from_scalar(s0));
+    let sig1_invalid = sig1.update(32, &bytes_from_scalar(s1));
+    assert!(!verify(msg0, pk0, sig0_invalid).is_ok());
+    assert!(!verify(msg1, pk1, sig1_invalid).is_ok());
+
+    let mut pms_strange = Seq::<(PublicKey, Message, Signature)>::new(0);
+    pms_strange = pms_strange.push(&(pk0, msg0, sig0_invalid));
+    pms_strange = pms_strange.push(&(pk1, msg1, sig1_invalid));
+    let aggsig_strange = aggregate(&pms_strange).unwrap();
+    let pm_strange = strip_sigs(&pms_strange);
+    assert!(verify_aggregate(&aggsig_strange, &pm_strange).is_ok());
 }
 
 #[test]
