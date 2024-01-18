@@ -61,7 +61,7 @@ Moreover, they came up with an elegant approach to incremental aggregation that 
 * Incremental aggregation allows non-interactively aggregating additional BIP 340 signatures into an existing half-aggregate signature.
 * A half-aggregate signature of ''u'' BIP 340 input signatures is serialized as the ''(u+1)⋅32''-byte array ''r<sub>1</sub> || ... || r<sub>u</sub> || bytes(s)'' where ''r<sub>i</sub>'' is a 32-byte array from input signature ''i'' and ''s'' is a scalar aggregate (see below for details).
 * This document does ''not'' specify the aggregation of multiple aggregate signatures (yet). It is possible, but requires changing the encoding of an aggregate signature. Since it is not possible to undo the aggregation of the s-values, when verifying of such an aggregate signature the randomizers need to be the same as when verifying the individual aggregate signature. Therefore, the aggregate signature needs to encode a tree that reveals how the individual signatures were aggregated and how the resulting aggregate signatures were reaggregated.
-* There is a possible optimization where the first randomizer ''z<sub>0</sub>'' is set to the constant ''1'' which speeds up verification because ''z<sub>0</sub>⋅R<sub>0</sub> = R<sub>0</sub>''. This specification does not make use of this optimization yet (TODO).
+* The first randomizer ''z<sub>0</sub>'' is fixed to the constant ''1'', which speeds up verification because ''z<sub>0</sub>⋅R<sub>0</sub> = R<sub>0</sub>''. This optimization has been suggested and proven secure by [https://eprint.iacr.org/2022/222.pdf Chen and Zhao].
 * The maximum number of signatures that can be aggregated is ''2<sup>16</sup> - 1''. Having a maximum value is supposed to prevent integer overflows. This specific value was a conservative choice and may be raised in the future (TODO).
 
 == Description ==
@@ -147,7 +147,10 @@ Input:
 ** Let ''(pk<sub>i</sub>, m<sub>i</sub>, sig<sub>i</sub>) = pms_to_agg<sub>i-v</sub>''
 ** Let ''r<sub>i</sub> = sig<sub>i</sub>[0:32]''
 ** Let ''s<sub>i</sub> = int(sig<sub>i</sub>[32:64])''
-** Let ''z<sub>i</sub> = int(hash<sub>HalfAgg/randomizer</sub>(r<sub>0</sub> || pk<sub>0</sub> || m<sub>0</sub> || ... || r<sub>i</sub> || pk<sub>i</sub> || m<sub>i</sub>)) mod n''
+** If ''i = 0'':
+*** Let ''z<sub>i</sub> = 1''
+** Else:
+*** Let ''z<sub>i</sub> = int(hash<sub>HalfAgg/randomizer</sub>(r<sub>0</sub> || pk<sub>0</sub> || m<sub>0</sub> || ... || r<sub>i</sub> || pk<sub>i</sub> || m<sub>i</sub>)) mod n''
 * Let ''s = int(aggsig[(v⋅32:(v+1)⋅32]) + z<sub>v</sub>⋅s<sub>v</sub> + ... + z<sub>v+u-1</sub>⋅s<sub>v+u-1</sub> mod n''
 * Return ''r<sub>0</sub> || ... || r<sub>v+u-1</sub> || bytes(s)''
 
@@ -169,7 +172,10 @@ The algorithm ''VerifyAggregate(aggsig, pm_aggd<sub>0..u-1</sub>)'' is defined a
 ** Let ''r<sub>i</sub> = aggsig[i⋅32:(i+1)⋅32]''
 ** Let ''R<sub>i</sub> = lift_x(int(r<sub>i</sub>))''; fail if that fails
 ** Let ''e<sub>i</sub> = int(hash<sub>BIP0340/challenge</sub>(bytes(r<sub>i</sub>) || pk<sub>i</sub> || m<sub>i</sub>)) mod n''
-** Let ''z<sub>i</sub> = int(hash<sub>HalfAgg/randomizer</sub>(r<sub>0</sub> || pk<sub>0</sub> || m<sub>0</sub> || ... || r<sub>i</sub> || pk<sub>i</sub> || m<sub>i</sub>)) mod n''
+** If ''i = 0'':
+*** Let ''z<sub>i</sub> = 1''
+** Else:
+*** Let ''z<sub>i</sub> = int(hash<sub>HalfAgg/randomizer</sub>(r<sub>0</sub> || pk<sub>0</sub> || m<sub>0</sub> || ... || r<sub>i</sub> || pk<sub>i</sub> || m<sub>i</sub>)) mod n''
 * Let ''s = int(aggsig[u⋅32:(u+1)⋅32]); fail if ''s &ge; n''
 * Fail if ''s⋅G &ne; z<sub>0</sub>⋅(R<sub>0</sub> + e<sub>0</sub>⋅P<sub>0</sub>) + ... + z<sub>u-1</sub>⋅(R<sub>u-1</sub> + e<sub>u-1</sub>⋅P<sub>u-1</sub>)''
 * Return success iff no failure occurred before reaching this point.

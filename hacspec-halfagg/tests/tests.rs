@@ -79,13 +79,9 @@ fn test_verify_vectors_process(
 fn test_verify_vectors() {
     #[rustfmt::skip]
     let vectors_raw = vec![
-        (vec![],
-         "0000000000000000000000000000000000000000000000000000000000000000"),
-        (vec![("1b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f", "0202020202020202020202020202020202020202020202020202020202020202"),],
-         "b070aafcea439a4f6f1bbfc2eb66d29d24b0cab74d6b745c3cfb009cc8fe4aa8108f33907612fb748419ebc4004b3169e16e35d5f12b693b6bbc3d4a6982f2f6"),
-        (vec![("1b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f", "0202020202020202020202020202020202020202020202020202020202020202"),
-              ("462779ad4aad39514614751a71085f2f10e1c7a593e4e030efb5b8721ce55b0b", "0505050505050505050505050505050505050505050505050505050505050505"),],
-         "b070aafcea439a4f6f1bbfc2eb66d29d24b0cab74d6b745c3cfb009cc8fe4aa8a3afbdb45a6a34bf7c8c00f1b6d7e7d375b54540f13716c87b62e51e2f4f22ffc211db48479c2f546d52b07955e764eb6a142d577245f40a44f5dee468da4244"),
+        (vec![], "0000000000000000000000000000000000000000000000000000000000000000"),
+        (vec![("1b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f", "0202020202020202020202020202020202020202020202020202020202020202"),], "b070aafcea439a4f6f1bbfc2eb66d29d24b0cab74d6b745c3cfb009cc8fe4aa80e066c34819936549ff49b6fd4d41edfc401a367b87ddd59fee38177961c225f"),
+        (vec![("1b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f", "0202020202020202020202020202020202020202020202020202020202020202"),("462779ad4aad39514614751a71085f2f10e1c7a593e4e030efb5b8721ce55b0b", "0505050505050505050505050505050505050505050505050505050505050505"),], "b070aafcea439a4f6f1bbfc2eb66d29d24b0cab74d6b745c3cfb009cc8fe4aa8a3afbdb45a6a34bf7c8c00f1b6d7e7d375b54540f13716c87b62e51e2f4f22ffbf8913ec53226a34892d60252a7052614ca79ae939986828d81d2311957371ad"),
     ];
     let vectors = test_verify_vectors_process(&vectors_raw);
     // Uncomment to generate and print test vectors:
@@ -154,12 +150,7 @@ fn test_aggregate_verify_strange() {
     for i in 0..2 {
         let (pk, msg, sig) = pms_triples[i];
         pmr = pmr.push(&(pk, msg, Bytes32::from_slice(&sig, 0, 32)));
-        // TODO: The following line hashes i elements and therefore leads to
-        // quadratic runtime. Instead, we should cache the intermediate result
-        // and only hash the new element.
-        z = z.push(&scalar_from_bytes(hash_halfagg(
-            &Seq::<(PublicKey, Message, Bytes32)>::from_slice(&pmr, 0, i + 1),
-        )));
+        z = z.push(&randomizer(&pmr, i));
     }
 
     // Shift signatures appropriately
@@ -220,5 +211,7 @@ fn test_edge_cases() {
         inc_aggregate(&aggsig, &empty_pm, &big_pms).unwrap_err()
             == hacspec_halfagg::Error::AggSigTooBig
     );
-    assert!(verify_aggregate(&aggsig, &big_pm).unwrap_err() == hacspec_halfagg::Error::AggSigTooBig);
+    assert!(
+        verify_aggregate(&aggsig, &big_pm).unwrap_err() == hacspec_halfagg::Error::AggSigTooBig
+    );
 }
