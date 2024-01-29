@@ -120,7 +120,7 @@ pub fn verify_aggregate(aggsig: &AggSig, pm_aggd: &Seq<(PublicKey, Message)>) ->
             VerifyResult::Err(Error::InvalidSignature)?;
         }
         let r = r_res.unwrap();
-        let e = scalar_from_bytes(hash_challenge(rx, bytes_from_point(p), msg));
+        let e = scalar_from_bytes(hash_challenge(rx, pk, msg));
         pmr[i] = (pk, msg, rx);
         let z = randomizer(&pmr, i);
         terms[2 * i] = (z, r);
