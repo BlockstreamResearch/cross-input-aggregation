@@ -123,7 +123,8 @@ Input:
 
 '''''Aggregate(pms<sub>0..u-1</sub>)''''':
 * Let ''aggsig = bytes(0)''
-* Return ''IncAggregate(aggsig, pms<sub>0..u-1</sub>)''; fail if that fails.
+* Let ''pm_aggd'' be an empty array
+* Return ''IncAggregate(aggsig, pm_aggd, pms<sub>0..u-1</sub>)''; fail if that fails.
 
 ==== IncAggregate ====
 
