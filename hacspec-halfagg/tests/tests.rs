@@ -198,20 +198,4 @@ fn test_edge_cases() {
         verify_aggregate(&aggsig, &empty_pm).unwrap_err()
             == hacspec_halfagg::Error::InvalidSignature
     );
-
-    let big_pms = Seq::<(PublicKey, Message, Signature)>::new(0xffff + 1);
-    assert!(aggregate(&big_pms).unwrap_err() == hacspec_halfagg::Error::AggSigTooBig);
-    let aggsig = AggSig::new(32);
-    let big_pm = Seq::<(PublicKey, Message)>::new(0xffff + 1);
-    assert!(
-        inc_aggregate(&aggsig, &big_pm, &empty_pms).unwrap_err()
-            == hacspec_halfagg::Error::AggSigTooBig
-    );
-    assert!(
-        inc_aggregate(&aggsig, &empty_pm, &big_pms).unwrap_err()
-            == hacspec_halfagg::Error::AggSigTooBig
-    );
-    assert!(
-        verify_aggregate(&aggsig, &big_pm).unwrap_err() == hacspec_halfagg::Error::AggSigTooBig
-    );
 }

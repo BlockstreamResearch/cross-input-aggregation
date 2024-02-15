@@ -62,7 +62,7 @@ Moreover, they came up with an elegant approach to incremental aggregation that 
 * A half-aggregate signature of ''u'' BIP 340 input signatures is serialized as the ''(u+1)⋅32''-byte array ''r<sub>1</sub> || ... || r<sub>u</sub> || bytes(s)'' where ''r<sub>i</sub>'' is a 32-byte array from input signature ''i'' and ''s'' is a scalar aggregate (see below for details).
 * This document does ''not'' specify the aggregation of multiple aggregate signatures (yet). It is possible, but requires changing the encoding of an aggregate signature. Since it is not possible to undo the aggregation of the s-values, when verifying of such an aggregate signature the randomizers need to be the same as when verifying the individual aggregate signature. Therefore, the aggregate signature needs to encode a tree that reveals how the individual signatures were aggregated and how the resulting aggregate signatures were reaggregated.
 * The first randomizer ''z<sub>0</sub>'' is fixed to the constant ''1'', which speeds up verification because ''z<sub>0</sub>⋅R<sub>0</sub> = R<sub>0</sub>''. This optimization has been suggested and proven secure by [https://eprint.iacr.org/2022/222.pdf Chen and Zhao].
-* The maximum number of signatures that can be aggregated is ''2<sup>16</sup> - 1''. Having a maximum value is supposed to prevent integer overflows. This specific value was a conservative choice and may be raised in the future (TODO).
+* This BIP does not impose a maximum number of signatures that can be aggregated in a single half-aggregate signature. Implementations may enforce limits, e.g., to faciliate testing, to prevent ressource exhaustion and integer overflows. Additionally, applications should enforce a (possibly lower) limit that suits their needs, taking into account that processing large aggregates may take a considerable amount of time. We note that there must be agreement over the limits in consensus-critical applications.
 
 == Description ==
 
@@ -139,7 +139,6 @@ Input:
 * ''pms_to_agg<sub>0..u-1</sub>'': an array of ''u'' triples, where the first element of each tuple is a 32-byte public key, the second element is a 32-byte message and the third element is a 64-byte BIP 340 signature
 
 '''''IncAggregate(aggsig, pm_aggd<sub>0..v-1</sub>, pms_to_agg<sub>0..u-1</sub>)''''':
-* Fail if ''v + u &ge; 2<sup>16</sup>''
 * Fail if ''len(aggsig) &ne; 32 * (v + 1)''
 * For ''i = 0 .. v-1'':
 ** Let ''(pk<sub>i</sub>, m<sub>i</sub>) = pm_aggd<sub>i</sub>''
@@ -165,7 +164,6 @@ Input:
 
 '''''VerifyAggregate(aggsig, pm_aggd<sub>0..u-1</sub>)''''':
 The algorithm ''VerifyAggregate(aggsig, pm_aggd<sub>0..u-1</sub>)'' is defined as:
-* Fail if ''u &ge; 2<sup>16</sup>''
 * Fail if ''len(aggsig) &ne; 32 * (u + 1)''
 * For ''i = 0 .. u-1'':
 ** Let ''(pk<sub>i</sub>, m<sub>i</sub>) = pm_aggd<sub>i</sub>''
