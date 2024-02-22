@@ -37,6 +37,7 @@ Another application of half-aggregation is within the Bitcoin consensus protocol
 In particular, it has been discussed in the context of the [https://lists.linuxfoundation.org/pipermail/bitcoin-dev/2018-February/015700.html Graftroot proposal].
 Half-aggregation would allow Graftroot spending to be as efficient as best-case Taproot spends by aggregating the signature of the ''surrogate script'' and signatures that satisfy this script.
 Moreover, half-aggregation improves the efficiency of proposed Bitcoin script opcodes that verify multiple signatures, such as [https://lists.linuxfoundation.org/pipermail/bitcoin-dev/2022-February/019926.html OP_EVICT].
+We can also imagine adding a Bitcoin script opcode that verifies a half-aggregate signature, allowing for more efficient non-interactive multi and threshold signatures.
 
 Half-aggregation can also be applied to the signatures in the inputs of Bitcoin transactions, a process known as cross-input signature aggregation (CISA).
 This [https://github.com/ElementsProject/cross-input-aggregation/blob/master/savings.org reduces the size of an average transaction] by 20.6% and the weight by 7.6%.
