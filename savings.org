@@ -29,9 +29,13 @@ def tx_size(n_inputs, n_outputs):
       [1, 4]))
 
 
-# Average according to https://transactionfee.info/
-n_inputs = 2.73
-n_outputs = 2.8
+# 365 day moving average according to
+# - https://transactionfee.info/charts/inputs-per-transaction/ and
+# - https://transactionfee.info/charts/outputs-per-transaction/
+# retrieved 2025-02-28.
+n_inputs = 2.26
+n_outputs = 2.69
+
 
 size = tx_size(n_inputs, n_outputs)
 half_agged = map(lambda s: s - n_inputs*32, size)
@@ -55,10 +59,10 @@ def savings(name, agged_sizes):
 #+RESULTS:
 |                                               | bytes | weight units |
 |-----------------------------------------------+-------+--------------|
-| half aggregation                              | 20.6% |         7.6% |
-| full aggregation                              | 26.1% |         9.6% |
-| both                                          | 33.6% |        12.4% |
-| max (like infinite large full agged coinjoin) | 41.2% |        15.2% |
+| half aggregation                              | 19.6% |         7.1% |
+| full aggregation                              | 21.8% |         7.9% |
+| both                                          | 30.5% |        11.0% |
+| max (like infinite large full agged coinjoin) | 39.1% |        14.1% |
 
 
 * Graftroot
