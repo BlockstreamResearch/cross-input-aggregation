@@ -38,9 +38,10 @@ n_outputs = 2.69
 
 
 size = tx_size(n_inputs, n_outputs)
-half_agged = map(lambda s: s - n_inputs*32, size)
-full_agged = map(lambda s: s - (n_inputs-1)*64, size)
-both_agged = map(lambda s: s - (n_inputs-1)*64 - 32, size)
+half_agged_tx = map(lambda s: s - (n_inputs - 1)*32, size)
+half_agged_block = map(lambda s: s - n_inputs*32, size)
+full_agged_tx = map(lambda s: s - (n_inputs-1)*64, size)
+full_agged_tx_half_agged_block = map(lambda s: s - (n_inputs-1)*64 - 32, size)
 max_agged = map(lambda s: s - n_inputs*64, size)
 
 def savings(name, agged_sizes):
@@ -49,20 +50,22 @@ def savings(name, agged_sizes):
 [
     [ "", "bytes", "weight units" ],
     None,
-    savings("half aggregation", half_agged),
-    savings("full aggregation", full_agged),
-    savings("both", both_agged),
-    savings("max (like infinite large full agged coinjoin)", max_agged)
+    savings("half aggregation across tx", half_agged_tx),
+    savings("half aggregation across block", half_agged_block),
+    savings("full aggregation across tx", full_agged_tx),
+    savings("full aggregation across tx & half aggregation across block", full_agged_tx_half_agged_block),
+    savings("max (like infinite large fully aggregated coinjoin)", max_agged)
 ]
 #+end_src
 
 #+RESULTS:
-|                                               | bytes | weight units |
-|-----------------------------------------------+-------+--------------|
-| half aggregation                              | 19.6% |         7.1% |
-| full aggregation                              | 21.8% |         7.9% |
-| both                                          | 30.5% |        11.0% |
-| max (like infinite large full agged coinjoin) | 39.1% |        14.1% |
+|                                                            | bytes | weight units |
+|------------------------------------------------------------+-------+--------------|
+| half aggregation across tx                                 | 10.9% |         3.9% |
+| half aggregation across block                              | 19.6% |         7.1% |
+| full aggregation across tx                                 | 21.8% |         7.9% |
+| full aggregation across tx & half aggregation across block | 30.5% |        11.0% |
+| max (like infinite large fully aggregated coinjoin)        | 39.1% |        14.1% |
 
 
 * Graftroot
