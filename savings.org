@@ -30,8 +30,8 @@ def tx_size(n_inputs, n_outputs):
 
 
 # 365 day moving average according to
-# - https://transactionfee.info/charts/inputs-per-transaction/ and
-# - https://transactionfee.info/charts/outputs-per-transaction/
+# - https://transactionfee.info/charts/inputs-per-transaction/?avg=365&start=2025-02-26&end=2025-02-27 and
+# - https://transactionfee.info/charts/outputs-per-transaction/?avg=365&start=2025-02-26&end=2025-02-27
 # retrieved 2025-02-28.
 n_inputs = 2.26
 n_outputs = 2.69
