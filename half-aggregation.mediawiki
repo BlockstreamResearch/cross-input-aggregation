@@ -79,18 +79,17 @@ Moreover, they came up with an elegant approach to incremental aggregation that 
 
 === Specification ===
 
-The specification is written in [https://github.com/hacspec/hacspec hacspec], a language for formal specifications and a subset of rust.
-It can be found in the [[hacspec-halfagg/src/halfagg.rs|hacspec-halfagg directory]].
-Note that the specification depends the hacspec library and a [https://github.com/hacspec/hacspec/pull/244 hacspec implementation of BIP 340].
+The specification is written in Python and can be found in the [[py-halfagg/halfagg.py|py-halfagg directory]]
+Note that the specification depends on the [https://github.com/secp256k1lab/secp256k1lab secp256k1lab library].
 
 === Test Vectors ===
 
-Preliminary test vectors are provided in [[hacspec-halfagg/tests/tests.rs|tests.rs]].
-The specification can be executed with the test vectors by running <code>cargo test</code> in the [[hacspec-halfagg|hacspec-halfagg directory]] (<code>cargo</code> is the [https://doc.rust-lang.org/stable/cargo/ rust package manager]).
+Test vectors are provided in [[py-halfagg/vectors/|vectors]] and are generated with a [[py-halfagg/gen_test_vectors.py|generator script]].
+The specification can be executed with the test vectors by running [[py-halfagg/run_test_vectors.py|the run_test_vectors script]].
 
 === Pseudocode ===
 
-The following pseudocode is ''not'' a specification but is only intended to augment the actual hacspec [[#specification|specification]].
+The following pseudocode is ''not'' a specification but is only intended to augment the actual Python [[#specification|specification]].
 
 ==== Notation ====
 
